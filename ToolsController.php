@@ -8,6 +8,12 @@ use Symfony\Component\Routing\Annotation\Route;
 use Doctrine\ORM\EntityManagerInterface;
 use App\Service\base\ArrayHelper;
 use Symfony\Component\Config\Definition\Exception\Exception;
+use Symfony\Component\Console\Input\ArrayInput;
+use Symfony\Component\Console\Output\BufferedOutput;
+use Symfony\Component\Console\Application;
+use Symfony\Component\HttpKernel\KernelInterface;
+use Symfony\Component\Process\Process;
+use Symfony\Component\Process\Exception\ProcessFailedException;
 
 class ToolsController extends AbstractController
 {
@@ -46,10 +52,9 @@ class ToolsController extends AbstractController
     }
 
     #[Route('/admin/links', name: 'test_links')]
-    public function test_links()
+    public function test_links(KernelInterface $kernel)
     {
-        // exec('php /app/fink.phar "http://localhost" --concurrency 12 --output=/app/linktests.json >/dev/null 2>&1 &');
-        foreach (explode("\n", file_get_contents('/app/linktests.json')) as $t) {
+        foreach (explode("\n", file_get_contents('/app/tests/linktests.json')) as $t) {
             $tab[] = json_decode($t, true);
         }
         return $this->renderForm(
