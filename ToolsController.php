@@ -44,4 +44,19 @@ class ToolsController extends AbstractController
         $em->flush();
         return $this->redirectToRoute(strtolower($entity) . '_index', [], Response::HTTP_SEE_OTHER);
     }
+
+    #[Route('/admin/links', name: 'test_links')]
+    public function test_links()
+    {
+        // exec('php /app/fink.phar "http://localhost" --concurrency 12 --output=/app/linktests.json >/dev/null 2>&1 &');
+        foreach (explode("\n", file_get_contents('/app/linktests.json')) as $t) {
+            $tab[] = json_decode($t, true);
+        }
+        return $this->renderForm(
+            'base/test_links.html.twig',
+            [
+                'links' => $tab,
+            ]
+        );
+    }
 }
