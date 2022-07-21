@@ -51,7 +51,7 @@ class ToolsController extends AbstractController
         return $this->redirectToRoute(strtolower($entity) . '_index', [], Response::HTTP_SEE_OTHER);
     }
 
-    #[Route('/admin/links', name: 'test_links')]
+    #[Route('/admin/links', name: 'links_index')]
     public function test_links(KernelInterface $kernel)
     {
         foreach (explode("\n", file_get_contents('/app/tests/linktests.json')) as $t) {
