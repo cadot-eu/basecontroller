@@ -54,8 +54,12 @@ class ToolsController extends AbstractController
     #[Route('/admin/links', name: 'links_index')]
     public function test_links(KernelInterface $kernel)
     {
-        foreach (explode("\n", file_get_contents('/app/tests/linktests.json')) as $t) {
-            $tab[] = json_decode($t, true);
+        $file = '/app/tests/linktests.json';
+        $tab = [];
+        if (file_exists($file)) {
+            foreach (explode("\n", file_get_contents($file)) as $t) {
+                $tab[] = json_decode($t, true);
+            }
         }
         return $this->renderForm(
             'base/test_links.html.twig',
