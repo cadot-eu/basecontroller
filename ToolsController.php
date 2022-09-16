@@ -11,6 +11,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Config\Definition\Exception\Exception;
 use App\Service\base\ArrayHelper;
+use Liip\ImagineBundle\Service\FilterService;
 
 class ToolsController extends AbstractController
 {
@@ -27,12 +28,20 @@ class ToolsController extends AbstractController
         return $this->render('admin/accountnotvalidated.html.twig', []);
     }
 
-    //ajax pour uploader un fichier
-    #[Route('/upload/{name}', name: 'upload')]
-    public function upload(FileUploader $fileUploader, Request $request, string $name): Response
+    /* -------------------------------------------------------------------------- */
+    /*                        ajax pour uploader un fichier                       */
+    /* -------------------------------------------------------------------------- */
+    #[Route('/upload/{name}/{filter}', name: 'upload')]
+    public function upload(FilterService $filterService, FileUploader $fileUploader, Request $request, string $name, $filter = null): Response
     {
-        return new JsonResponse(['url' => '/' . $fileUploader->upload($request->files->get('upload'), $name . '/')]);
+        $filename = $fileUploader->upload($request->files->get('upload'), $name . '/');
+        if ($filter) {
+            rename('/app/public/' . parse_url($filterService->getUrlOfFilteredImage($filename, $filter))['path'], '/app/public/' . $filename);
+        }
+        return new JsonResponse(['url' => '/' . $filename]);
     }
+
+
 
     /* ------------ permet de sélectionner dans une entité un élément ----------- */
     /* ------ et d'avoir une url coper dans le presse papier par sélection ------ */
@@ -124,4 +133,3 @@ class ToolsController extends AbstractController
         return $this->redirectToRoute(strtolower($entity) . '_index', [], Response::HTTP_SEE_OTHER);
     }
 }
-/* It changes the order of the elements in the database. */
