@@ -12,6 +12,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Config\Definition\Exception\Exception;
 use App\Service\base\ArrayHelper;
 use Liip\ImagineBundle\Service\FilterService;
+use App\Service\base\TestHelper;
 
 class ToolsController extends AbstractController
 {
@@ -79,7 +80,7 @@ class ToolsController extends AbstractController
     /* -------------------------------------------------------------------------- */
     /*                testeur de liens et création du fichier json                */
     /* -------------------------------------------------------------------------- */
-    #[Route('/admin/linktester', name: 'linktester')]
+    #[Route('/superadmin/linktester', name: 'linktester')]
     public function linktester()
     {
         $retour = exec('php /app/
