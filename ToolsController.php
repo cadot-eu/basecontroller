@@ -35,10 +35,7 @@ class ToolsController extends AbstractController
     #[Route('/upload/{name}/{filter}', name: 'upload')]
     public function upload(FilterService $filterService, FileUploader $fileUploader, Request $request, string $name, $filter = null): Response
     {
-        $filename = $fileUploader->upload($request->files->get('upload'), $name . '/');
-        if ($filter) {
-            rename('/app/public/' . parse_url($filterService->getUrlOfFilteredImage($filename, $filter))['path'], '/app/public/' . $filename);
-        }
+        $filename = $fileUploader->upload($request->files->get('upload'), $name . '/', $filter);
         return new JsonResponse(['url' => '/' . $filename]);
     }
 
