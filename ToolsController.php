@@ -23,10 +23,8 @@ class ToolsController extends AbstractController
         if ($this->getUser() == null) {
             return $this->redirectToRoute('home_index');
         }
-        if ($this->getUser()->isVerified()) {
-            return $this->render('admin/accountvalidated.html.twig', []);
-        }
-        return $this->render('admin/accountnotvalidated.html.twig', []);
+
+        return $this->render('admin/admin.html.twig', []);
     }
 
     /* -------------------------------------------------------------------------- */
