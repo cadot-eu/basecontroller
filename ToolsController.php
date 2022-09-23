@@ -13,9 +13,27 @@ use Symfony\Component\Config\Definition\Exception\Exception;
 use App\Service\base\ArrayHelper;
 use Liip\ImagineBundle\Service\FilterService;
 use App\Service\base\TestHelper;
+use App\Security\EmailVerifier;
+use Psr\Log\LoggerInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 class ToolsController extends AbstractController
 {
+    //implémentation pour tous les controllers
+    //RegistrationController comme base ;-)
+    private EmailVerifier $emailVerifier;
+
+    protected $logger;
+
+    protected $translator;
+
+    public function __construct(EmailVerifier $emailVerifier, LoggerInterface $logger, TranslatorInterface $translator)
+    {
+        $this->emailVerifier = $emailVerifier;
+        $this->logger = $logger;
+        $this->translator = $translator;
+    }
+
     //accès à la partie admin du site
     #[Route('/admin', name: 'admin_index')]
     public function admin(): Response
