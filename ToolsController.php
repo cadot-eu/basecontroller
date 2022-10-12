@@ -59,7 +59,7 @@ class ToolsController extends AbstractController
 
     /* ------------ permet de sélectionner dans une entité un élément ----------- */
     /* ------ et d'avoir une url coper dans le presse papier par sélection ------ */
-    #[Route('/admin/SelectAndCopy/{entitie}/{champs}/{recherche}/{affichage}/{copy}/{limit}', name: 'linktester')]
+    #[Route('/admin/SelectAndCopy/{entitie}/{champs}/{recherche}/{affichage}/{copy}/{limit}', name: 'selectandcopy')]
     /**
      * It searches for a string in the title of an article, and returns the title and the content of
      * the article
