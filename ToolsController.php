@@ -48,25 +48,25 @@ class ToolsController extends AbstractController
     /* -------------------------------------------------------------------------- */
     /*                        ajax pour uploader un fichier                       */
     /* -------------------------------------------------------------------------- */
-
-    /**
-     * > Uploads a file to the server, and returns the URL of the uploaded file
-     * 
-     * @param FilterService filterService The service that filters the image
-     * @param FileUploader fileUploader The service that handles the file upload.
-     * @param Request request The current request object.
-     * @param string name The name of the directory where the file will be saved.
-     * @param filter The name of the filter to apply to the image.
-     */
     #[Route('/upload/{name}/{filter}', name: 'upload')]
     public function upload(FilterService $filterService, FileUploader $fileUploader, Request $request, string $name, $filter = null): Response
     {
-        if ($request->files->get('upload')) {
-            $filename = $fileUploader->upload($request->files->get('upload'), $name . '/', $filter);
-            return new JsonResponse(['url' => '/' . $filename]);
-        } else {
-            return new JsonResponse(['error' => 'not get file']);
+        $filename = $fileUploader->upload($request->files->get('upload'), $name . '/', $filter);
+        return new JsonResponse(['url' => '/' . $filename]);
+    }
+    /* -------------------------------------------------------------------------- */
+    /*                        ajax pour simplegallery                       */
+    /* -------------------------------------------------------------------------- */
+    #[Route('/simplegallery/{name}/{filter}', name: 'upload')]
+    public function simplegallery(FilterService $filterService, FileUploader $fileUploader, Request $request, string $name, $filter = null): Response
+    {
+        $filename = $fileUploader->upload($request->files->get('upload'), $name . '/', $filter);
+        $widths = [32, 128, 300, 600, 1080, 1920];
+        foreach ($widths as $width) {
+            $temp = $filterService->getUrlOfFilteredImage($filename, $width);
+            $destDir[$width] = $temp;
         }
+        return new JsonResponse(['urls' => $destDir]);
     }
 
 
