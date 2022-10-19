@@ -48,6 +48,17 @@ class ToolsController extends AbstractController
     /* -------------------------------------------------------------------------- */
     /*                        ajax pour uploader un fichier                       */
     /* -------------------------------------------------------------------------- */
+    /**
+     * > Uploads a file to the server, and returns the URL of the uploaded file
+     * 
+     * @param FilterService filterService The service that will be used to filter the image.
+     * @param FileUploader fileUploader The service that handles the file upload.
+     * @param Request request The request object
+     * @param string name The name of the folder to upload to.
+     * @param filter The name of the filter to apply to the image.
+     * 
+     * @return Response A JSON response with the URL of the uploaded file.
+     */
     #[Route('/upload/{name}/{filter}', name: 'upload')]
     public function upload(FilterService $filterService, FileUploader $fileUploader, Request $request, string $name, $filter = null): Response
     {
@@ -57,7 +68,20 @@ class ToolsController extends AbstractController
     /* -------------------------------------------------------------------------- */
     /*                        ajax pour simplegallery                       */
     /* -------------------------------------------------------------------------- */
-    #[Route('/simplegallery/{name}/{filter}', name: 'upload')]
+
+    /**
+     * It takes a file upload, uploads it to the server, and returns a JSON response with the URLs of
+     * the uploaded file and its resized versions
+     * 
+     * @param FilterService filterService The service that will be used to filter the image.
+     * @param FileUploader fileUploader The service that handles the file upload.
+     * @param Request request The request object
+     * @param string name the name of the folder where the images will be stored
+     * @param filter the name of the filter to apply to the image.
+     * 
+     * @return Response An array of urls to the images.
+     */
+    #[Route('/simplegallery/{name}/{filter}', name: 'simplegallery')]
     public function simplegallery(FilterService $filterService, FileUploader $fileUploader, Request $request, string $name, $filter = null): Response
     {
         $filename = $fileUploader->upload($request->files->get('upload'), $name . '/', $filter);
