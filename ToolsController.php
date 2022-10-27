@@ -88,7 +88,7 @@ class ToolsController extends AbstractController
         $widths = [32, 128, 300, 600, 1080, 1920];
         foreach ($widths as $width) {
             $temp = $filterService->getUrlOfFilteredImage($filename, $width);
-            $destDir[$width] = $temp;
+            $destDir[$width] = str_replace('http://', 'https://', $temp);
         }
         return new JsonResponse(['urls' => $destDir]);
     }
