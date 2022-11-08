@@ -2,6 +2,8 @@
 
 namespace App\Controller\base;
 
+use App\Entity\Chatmessage;
+use App\Repository\ChatRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -15,7 +17,10 @@ use Liip\ImagineBundle\Service\FilterService;
 use App\Service\base\TestHelper;
 use App\Security\EmailVerifier;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Contracts\Translation\TranslatorInterface;
+use App\Entity\Chat;
+use Symfony\Component\Serializer\SerializerInterface;
 
 class ToolsController extends AbstractController
 {
@@ -183,5 +188,48 @@ class ToolsController extends AbstractController
         }
         $em->flush();
         return $this->redirectToRoute(strtolower($entity) . '_index', [], Response::HTTP_SEE_OTHER);
+    }
+    #[route('/chatSend/{user}', name: 'chatsend', methods: ['POST'])]
+    function chatsend(ChatRepository $chatRepository, Request $request, EntityManagerInterface $em)
+    {
+        $content = (json_decode($request->getContent()));
+        $chat = $chatRepository->findOneBy(['user' => $request->get('user')]);
+        if (!$chat) {
+            $chat = new Chat();
+            $chat->setUser($request->get('user'));
+        }
+        $chat->setDeletedAt(null); //on réactive l'archive
+        $chat->setupdatedAt(new \DateTime());
+        $chatmessage = new Chatmessage();
+        $chatmessage->setTexte($content->message);
+        $chatmessage->setType($content->type);
+        $chat->addMessage($chatmessage);
+        $em->persist($chat);
+        $em->flush();
+        return new JsonResponse(['message' => 'ok']);
+    }
+    #[route('/chatGetMessages/{user}', name: 'chatGetMessages', methods: ['GET'])]
+    function chatgetmessages(ChatRepository $chatRepository, Request $request, SerializerInterface $serializer)
+    {
+        $chat = $chatRepository->findOneBy(['user' => $request->get('user'), 'deletedAt' => null]);
+        $retour = [];
+        if ($chat) {
+            $messages = $chat->getMessages();
+            foreach ($messages as $message) {
+                $retour[] = [
+                    'texte' => $message->getTexte(),
+                    'date' => $message->getCreatedAt() ? $message->getCreatedAt()->format('d/m/Y H:i:s') : '',
+                    'type' => $message->getType()
+                ];
+            }
+        }
+        return new JsonResponse(array_reverse($retour));
+    }
+    #[Route('/admin/chatboxs', name: 'chatboxs_index', methods: ['GET'])]
+    public function chatboxs_index(ChatRepository $chatRepository, Request $request): Response
+    {
+        return $this->render('/base/chatbox_index.html.twig', [
+            'chats' => $chatRepository->findBy(['deletedAt' => null])
+        ]);
     }
 }
