@@ -21,6 +21,8 @@ use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use App\Entity\Chat;
 use Symfony\Component\Serializer\SerializerInterface;
+use DateTime;
+use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
 
 class ToolsController extends AbstractController
 {
@@ -199,17 +201,18 @@ class ToolsController extends AbstractController
             $chat->setUser($request->get('user'));
         }
         $chat->setDeletedAt(null); //on réactive l'archive
-        $chat->setupdatedAt(new \DateTime());
         $chatmessage = new Chatmessage();
         $chatmessage->setTexte($content->message);
         $chatmessage->setType($content->type);
+        $chatmessage->setcreatedAt(new \DateTime());
         $chat->addMessage($chatmessage);
+        $chat->setupdatedAt(new \DateTime());
         $em->persist($chat);
         $em->flush();
         return new JsonResponse(['message' => 'ok']);
     }
     #[route('/chatGetMessages/{user}', name: 'chatGetMessages', methods: ['GET'])]
-    function chatgetmessages(ChatRepository $chatRepository, Request $request, SerializerInterface $serializer)
+    function chatgetmessages(ChatRepository $chatRepository, Request $request)
     {
         $chat = $chatRepository->findOneBy(['user' => $request->get('user'), 'deletedAt' => null]);
         $retour = [];
@@ -225,11 +228,45 @@ class ToolsController extends AbstractController
         }
         return new JsonResponse(array_reverse($retour));
     }
-    #[Route('/admin/chatboxs', name: 'chatboxs_index', methods: ['GET'])]
-    public function chatboxs_index(ChatRepository $chatRepository, Request $request): Response
+    #[route('/admin/chatGet', name: 'chatGet', methods: ['GET'])]
+    function chatget(ChatRepository $chatRepository, Request $request)
     {
+        $retour = [];
+        $now = new DateTime('now');
+        foreach ($chatRepository->findBy(['deletedAt' => null], ['id' => 'DESC']) as $chat) {
+            $messages = [];
+            foreach ($chat->getMessages() as $message) {
+                $messages[] = [
+                    'texte' => $message->getTexte(),
+                    'created_in' =>  $message->getCreatedAt() ? $now->diff($message->getCreatedAt())->format('%djour %hh %imn %Ss') : '',
+                    'type' => $message->getType()
+                ];
+            }
+            $retour[] = [
+                'user' => $chat->getUser(),
+                'id' => $chat->getId(),
+                'updated_in' => $chat->getUpdatedAt() ? $now->diff($chat->getUpdatedAt())->format('%d jour %hh %imn %Ss') : '',
+                'messages' => array_reverse($messages)
+            ];
+        }
+        return new JsonResponse($retour);
+    }
+    #[Route('/admin/chatboxs', name: 'chatboxs_index', methods: ['GET'])]
+    public function chatboxs_index(ChatRepository $chatRepository, CsrfTokenManagerInterface $csrfTokenManagerInterface): Response
+    {
+        //ajout des csrfs
+        $csrf = [];
+        foreach ($chatRepository->findBy(['deletedAt' => null]) as $chat) {
+            $csrf[$chat->getId()] = $csrfTokenManagerInterface->getToken('delete' . $chat->getId())->getValue();
+        }
         return $this->render('/base/chatbox_index.html.twig', [
-            'chats' => $chatRepository->findBy(['deletedAt' => null])
+            'chats' => $chatRepository->findBy(['deletedAt' => null]),
+            'csrf' => json_encode($csrf),
+            'template_cards' => file_get_contents('/app/templates/chat_template_cards.html.twig'),
+            'template_card' => file_get_contents('/app/templates/chat_template_card.html.twig'),
+            'template_reponse' => file_get_contents('/app/templates/chat_template_reponse.html.twig'),
+            'template_question' => file_get_contents('/app/templates/chat_template_question.html.twig'),
+
         ]);
     }
 }
