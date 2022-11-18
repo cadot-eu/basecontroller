@@ -25,6 +25,9 @@ use DateTime;
 use Symfony\Component\Mercure\HubInterface;
 use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
 use Symfony\Component\Mercure\Update;
+use PHPMailer\PHPMailer\PHPMailer;
+use Symfony\Component\Mailer\MailerInterface;
+use Symfony\Component\Mime\Email;
 
 class ToolsController extends AbstractController
 {
@@ -59,13 +62,13 @@ class ToolsController extends AbstractController
     /* -------------------------------------------------------------------------- */
     /**
      * > Uploads a file to the server, and returns the URL of the uploaded file
-     * 
+     *
      * @param FilterService filterService The service that will be used to filter the image.
      * @param FileUploader fileUploader The service that handles the file upload.
      * @param Request request The request object
      * @param string name The name of the folder to upload to.
      * @param filter The name of the filter to apply to the image.
-     * 
+     *
      * @return Response A JSON response with the URL of the uploaded file.
      */
     #[Route('/upload/{name}/{filter}', name: 'upload')]
@@ -81,13 +84,13 @@ class ToolsController extends AbstractController
     /**
      * It takes a file upload, uploads it to the server, and returns a JSON response with the URLs of
      * the uploaded file and its resized versions
-     * 
+     *
      * @param FilterService filterService The service that will be used to filter the image.
      * @param FileUploader fileUploader The service that handles the file upload.
      * @param Request request The request object
      * @param string name the name of the folder where the images will be stored
      * @param filter the name of the filter to apply to the image.
-     * 
+     *
      * @return Response An array of urls to the images.
      */
     #[Route('/simplegallery/{name}/{filter}', name: 'simplegallery')]
@@ -110,7 +113,7 @@ class ToolsController extends AbstractController
     /**
      * It searches for a string in the title of an article, and returns the title and the content of
      * the article
-     * 
+     *
      * @param EntityManagerInterface em
      * @param entitie the name of the entity you want to search in
      * @param champs the field to search in
@@ -153,12 +156,12 @@ class ToolsController extends AbstractController
     #[route('/admin/changeordre/{entity}/{id}/{action}', name: 'change_ordre', methods: ['GET'])]
     /**
      * It moves an element in an array to a new position
-     * 
+     *
      * @param EntityManagerInterface em the entity manager
      * @param String entity the entity name
      * @param int id the id of the entity to move
      * @param String action the action to perform, up, down, top, bottom
-     * 
+     *
      * @return Response A Response object
      */
     public function changeOrdre(EntityManagerInterface $em, String $entity, int $id, String $action): Response
@@ -194,7 +197,7 @@ class ToolsController extends AbstractController
         return $this->redirectToRoute(strtolower($entity) . '_index', [], Response::HTTP_SEE_OTHER);
     }
     #[route('/chatSend/{user}', name: 'chatsend', methods: ['POST'])]
-    function chatsend(ChatRepository $chatRepository, Request $request, EntityManagerInterface $em, HubInterface $hub)
+    public function chatsend(ChatRepository $chatRepository, Request $request, EntityManagerInterface $em, HubInterface $hub)
     {
         $content = (json_decode($request->getContent()));
         $chat = $chatRepository->findOneBy(['user' => $request->get('user')]);
@@ -231,7 +234,7 @@ class ToolsController extends AbstractController
         return new JsonResponse(['message' => 'ok']);
     }
     #[route('/chatGetMessages/{user}', name: 'chatGetMessages', methods: ['GET'])]
-    function chatgetmessages(ChatRepository $chatRepository, Request $request)
+    public function chatgetmessages(ChatRepository $chatRepository, Request $request)
     {
         $chat = $chatRepository->findOneBy(['user' => $request->get('user'), 'deletedAt' => null]);
         $retour = [];
@@ -248,7 +251,7 @@ class ToolsController extends AbstractController
         return new JsonResponse(array_reverse($retour));
     }
     #[route('/admin/chatGet', name: 'chatGet', methods: ['GET'])]
-    function chatget(ChatRepository $chatRepository, Request $request)
+    public function chatget(ChatRepository $chatRepository, Request $request)
     {
         $retour = [];
         $now = new DateTime('now');
@@ -287,5 +290,21 @@ class ToolsController extends AbstractController
             'template_question' => file_get_contents('/app/templates/chat_template_question.html.twig'),
 
         ]);
+    }
+    #[Route('testmail')]
+    public function tesmail(MailerInterface $mailer)
+    {
+        $email = (new Email())
+            ->from('contact@picbleu.fr')
+            ->to('michael@cadot.eu')
+            //->cc('cc@example.com')
+            //->bcc('bcc@example.com')
+            //->replyTo('fabien@example.com')
+            //->priority(Email::PRIORITY_HIGH)
+            ->subject('Time for Symfony Mailer!')
+            ->text('Sending emails is fun again!')
+            ->html('<p>See Twig integration for better HTML integration!</p>');
+
+        $mailer->send($email);
     }
 }
