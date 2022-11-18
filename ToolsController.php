@@ -22,7 +22,9 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 use App\Entity\Chat;
 use Symfony\Component\Serializer\SerializerInterface;
 use DateTime;
+use Symfony\Component\Mercure\HubInterface;
 use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
+use Symfony\Component\Mercure\Update;
 
 class ToolsController extends AbstractController
 {
@@ -192,7 +194,7 @@ class ToolsController extends AbstractController
         return $this->redirectToRoute(strtolower($entity) . '_index', [], Response::HTTP_SEE_OTHER);
     }
     #[route('/chatSend/{user}', name: 'chatsend', methods: ['POST'])]
-    function chatsend(ChatRepository $chatRepository, Request $request, EntityManagerInterface $em)
+    function chatsend(ChatRepository $chatRepository, Request $request, EntityManagerInterface $em, HubInterface $hub)
     {
         $content = (json_decode($request->getContent()));
         $chat = $chatRepository->findOneBy(['user' => $request->get('user')]);
@@ -209,6 +211,19 @@ class ToolsController extends AbstractController
         $chat->setupdatedAt(new \DateTime());
         $em->persist($chat);
         $em->flush();
+        $update = new Update(
+            $_ENV['MERCURE_URL'] . '/chatbox/' . $request->get('user'),
+            json_encode([
+                'texte' => $content->message,
+                'type' => $content->type,
+                'time' => new \DateTime()
+            ]),
+            //true //private
+        );
+
+        $hub->publish($update);
+
+
         return new JsonResponse(['message' => 'ok']);
     }
     #[route('/chatGetMessages/{user}', name: 'chatGetMessages', methods: ['GET'])]
