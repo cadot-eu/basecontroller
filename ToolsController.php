@@ -28,6 +28,7 @@ use Symfony\Component\Mercure\Update;
 use PHPMailer\PHPMailer\PHPMailer;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Email;
+use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 
 class ToolsController extends AbstractController
 {
@@ -291,20 +292,24 @@ class ToolsController extends AbstractController
 
         ]);
     }
-    #[Route('testmail')]
-    public function tesmail(MailerInterface $mailer)
+    #[Route('testmail/{from}')]
+    public function testmail(MailerInterface $mailer, string $from)
     {
         $email = (new Email())
-            ->from('contact@picbleu.fr')
+            ->from($from)
             ->to('michael@cadot.eu')
-            //->cc('cc@example.com')
+            ->cc('cc@example.com')
             //->bcc('bcc@example.com')
             //->replyTo('fabien@example.com')
             //->priority(Email::PRIORITY_HIGH)
             ->subject('Time for Symfony Mailer!')
             ->text('Sending emails is fun again!')
             ->html('<p>See Twig integration for better HTML integration!</p>');
-
-        $mailer->send($email);
+        try {
+            $mailer->send($email);
+        } catch (TransportExceptionInterface $e) {
+            throw new \Exception($e->getMessage());
+        }
+        return new JsonResponse('ok');
     }
 }
