@@ -211,18 +211,22 @@ class ToolsController extends AbstractController
         $chat->setupdatedAt(new \DateTime());
         $em->persist($chat);
         $em->flush();
-        $update = new Update(
-            $_ENV['MERCURE_URL'] . '/chatbox/' . $request->get('user'),
-            json_encode([
-                'texte' => $content->message,
-                'type' => $content->type,
-                'time' => new \DateTime()
-            ]),
-            //true //private
-        );
+        //mercure
+        // $update = new Update(
+        //     $_ENV['MERCURE_URL'] . '/chatbox/' . $request->get('user'),
+        //     json_encode([
+        //         'texte' => $content->message,
+        //         'type' => $content->type,
+        //         'time' => new \DateTime()
+        //     ]),//tru pour private
+        // );
+        //$hub->publish($update);
 
-        $hub->publish($update);
-
+        //js
+        //         const url = new URL('{{ TBgetenv('MERCURE_URL') }}');
+        // url.searchParams.append('topic', '{{ TBgetenv('MERCURE_URL')~'/chatbox/'~ChatToken }}');
+        // const eventSource = new EventSource(url);
+        // eventSource.onmessage = e => console.log(e);
 
         return new JsonResponse(['message' => 'ok']);
     }
