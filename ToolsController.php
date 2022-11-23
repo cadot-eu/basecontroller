@@ -53,8 +53,8 @@ class ToolsController extends AbstractController
         if ($this->getUser() == null) {
             return $this->redirectToRoute('home_index');
         }
-
-        return $this->render('admin/admin.html.twig', []);
+        dd(json_decode(file_get_contents('/app/git_news.json')));
+        return $this->render('admin/admin.html.twig', ['news' => file_exists('/app/git_news.json') ? array_slice(json_decode(file_get_contents('/app/git_news.json'), true), 0, 10) : '']);
     }
 
     /* -------------------------------------------------------------------------- */
