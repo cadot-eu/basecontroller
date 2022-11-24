@@ -305,7 +305,7 @@ class ToolsController extends AbstractController
     {
         $email = (new Email())
             ->from($from)
-            ->to('michael@cadot.eu')
+            ->to('testmail@cadot.eu')
             ->cc('cc@example.com')
             //->bcc('bcc@example.com')
             //->replyTo('fabien@example.com')
