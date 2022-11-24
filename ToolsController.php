@@ -310,7 +310,7 @@ class ToolsController extends AbstractController
             //->bcc('bcc@example.com')
             //->replyTo('fabien@example.com')
             //->priority(Email::PRIORITY_HIGH)
-            ->subject('Time for Symfony Mailer!')
+            ->subject('Email test')
             ->text('Sending emails is fun again!')
             ->html('<p>See Twig integration for better HTML integration!</p>');
         try {
