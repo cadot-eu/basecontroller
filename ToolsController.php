@@ -47,14 +47,11 @@ class ToolsController extends AbstractController
     }
 
     //accès à la partie admin du site
-    #[Route('/admin', name: 'admin_index')]
-    public function admin(): Response
-    {
-        if ($this->getUser() == null) {
-            return $this->redirectToRoute('home_index');
-        }
-        return $this->render('admin/admin.html.twig', ['news' => file_exists('/app/git_news.json') ? array_slice(json_decode(file_get_contents('/app/git_news.json'), true), 0, 20) : '']);
-    }
+    // #[Route('/admin', name: 'admin_index')]
+    // public function admin(): Response
+    // {
+    //     return $this->render('admin/admin.html.twig', ['news' => file_exists('/app/git_news.json') ? array_slice(json_decode(file_get_contents('/app/git_news.json'), true), 0, 20) : '']);
+    // }
 
     /* -------------------------------------------------------------------------- */
     /*                        ajax pour uploader un fichier                       */
