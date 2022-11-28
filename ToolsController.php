@@ -47,7 +47,7 @@ class ToolsController extends AbstractController
     }
 
     //accès à la partie admin du site
-    // #[Route('/admin', name: 'admin_index')]
+    // #[Route('/admin', name: 'app_login')]
     // public function admin(): Response
     // {
     //     return $this->render('admin/admin.html.twig', ['news' => file_exists('/app/git_news.json') ? array_slice(json_decode(file_get_contents('/app/git_news.json'), true), 0, 20) : '']);
