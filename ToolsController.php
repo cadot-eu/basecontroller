@@ -98,6 +98,7 @@ class ToolsController extends AbstractController
             $temp = $filterService->getUrlOfFilteredImage($filename, $width);
             $destDir[$width] = str_replace('http://', 'https://', $temp);
         }
+        $session = $request->getSession();
         return new JsonResponse(['urls' => $destDir]);
     }
 
