@@ -29,6 +29,9 @@ use PHPMailer\PHPMailer\PHPMailer;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Email;
 use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
+use PHPUnit\Extensions\Selenium2TestCase\URL;
+use Psy\Readline\Hoa\EventSource;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class ToolsController extends AbstractController
 {
@@ -103,25 +106,30 @@ class ToolsController extends AbstractController
 	 * @return Response An array of urls to the images.
 	 */
 	#[Route('/simplegallery/{name}/{filter}', name: 'simplegallery')]
-	public function simplegallery(
-		FilterService $filterService,
-		FileUploader $fileUploader,
-		Request $request,
-		string $name,
-		$filter = null
-	): Response {
+	public function simplegallery(FilterService $filterService, FileUploader $fileUploader, Request $request, string $name, $filter = null): Response
+	{
 		$filename = $fileUploader->upload(
-			$request->files->get('upload'),
+			$request->files->get('file-0'),
 			$name . '/',
 			$filter
 		);
-		$widths = [32, 128, 300, 600, 1080, 1920];
-		foreach ($widths as $width) {
-			$temp = $filterService->getUrlOfFilteredImage($filename, $width);
-			$destDir[$width] = str_replace('http://', 'https://', $temp);
-		}
-		$session = $request->getSession();
-		return new JsonResponse(['urls' => $destDir]);
+
+		// $widths = [32, 128, 300, 600, 1080, 1920];
+		// foreach ($widths as $width) {
+		// 	$temp = $filterService->getUrlOfFilteredImage($filename, $width);
+		// 	$destDir[$width] = str_replace('http://', 'https://', $temp);
+		// }
+		return new Response(
+			'{"result": [
+{
+"url": "/' .
+				$filename .
+				'",
+"name": "test_image.jpg",
+"size": "561276"
+}
+]}'
+		);
 	}
 
 	/* -------------------------------------------------------------------------- */
@@ -169,10 +177,10 @@ class ToolsController extends AbstractController
 		$query = $em
 			->createQuery(
 				'SELECT p
-            FROM App\Entity\\' .
+FROM App\Entity\\' .
 					ucfirst($entitie) .
 					' p
-            WHERE p.' .
+WHERE p.' .
 					$champs .
 					' LIKE :recherche'
 			)
@@ -197,7 +205,7 @@ class ToolsController extends AbstractController
 	public function linktester()
 	{
 		$retour = exec('php /app/
-        fink.phar "http://localhost" --concurrency 12 --output=/app/tests/linktests.json --exclude-url=_profilerecho ');
+fink.phar "http://localhost" --concurrency 12 --output=/app/tests/linktests.json --exclude-url=_profilerecho ');
 		return new JsonResponse($retour);
 	}
 	/* -------------------------------------------------------------------------- */
@@ -214,11 +222,7 @@ class ToolsController extends AbstractController
 	 * @return Response A Response object
 	 */
 	#[
-		route(
-			'/admin/changeordre/{entity}/{id}/{action}',
-			name: 'change_ordre',
-			methods: ['GET']
-		)
+		route('/admin/changeordre/{entity}/{id}/{action}', name: 'change_ordre', methods: ['GET'])
 	]
 	public function changeOrdre(
 		EntityManagerInterface $em,
@@ -226,9 +230,7 @@ class ToolsController extends AbstractController
 		int $id,
 		string $action
 	): Response {
-		$faqs = $em
-			->getRepository('App\\Entity\\' . ucwords($entity))
-			->findBy([], ['ordre' => 'ASC']);
+		$faqs = $em->getRepository('App\\Entity\\' . ucwords($entity))->findBy([], ['ordre' => 'ASC']);
 		foreach ($faqs as $num => $faq) {
 			if ($faq->getId() == $id) {
 				$pos = $num;
@@ -263,12 +265,8 @@ class ToolsController extends AbstractController
 		);
 	}
 	#[route('/chatSend/{user}', name: 'chatsend', methods: ['POST'])]
-	public function chatsend(
-		ChatRepository $chatRepository,
-		Request $request,
-		EntityManagerInterface $em,
-		HubInterface $hub
-	) {
+	public function chatsend(ChatRepository $chatRepository, Request $request, EntityManagerInterface $em, HubInterface $hub)
+	{
 		$content = json_decode($request->getContent());
 		$chat = $chatRepository->findOneBy(['user' => $request->get('user')]);
 		if (!$chat) {
@@ -338,18 +336,16 @@ class ToolsController extends AbstractController
 	{
 		$retour = [];
 		$now = new DateTime('now');
-		foreach (
-			$chatRepository->findBy(['deletedAt' => null], ['id' => 'DESC'])
-			as $chat
-		) {
+		foreach ($chatRepository->findBy(['deletedAt' => null], ['id' => 'DESC'])
+			as $chat) {
 			$messages = [];
 			foreach ($chat->getMessages() as $message) {
 				$messages[] = [
 					'texte' => $message->getTexte(),
 					'created_in' => $message->getCreatedAt()
 						? $now
-							->diff($message->getCreatedAt())
-							->format('%djour %hh %imn %Ss')
+						->diff($message->getCreatedAt())
+						->format('%djour %hh %imn %Ss')
 						: '',
 					'type' => $message->getType(),
 				];
@@ -359,8 +355,8 @@ class ToolsController extends AbstractController
 				'id' => $chat->getId(),
 				'updated_in' => $chat->getUpdatedAt()
 					? $now
-						->diff($chat->getUpdatedAt())
-						->format('%d jour %hh %imn %Ss')
+					->diff($chat->getUpdatedAt())
+					->format('%d jour %hh %imn %Ss')
 					: '',
 				'messages' => array_reverse($messages),
 			];
@@ -368,10 +364,8 @@ class ToolsController extends AbstractController
 		return new JsonResponse($retour);
 	}
 	#[Route('/admin/chatboxs', name: 'chatboxs_index', methods: ['GET'])]
-	public function chatboxs_index(
-		ChatRepository $chatRepository,
-		CsrfTokenManagerInterface $csrfTokenManagerInterface
-	): Response {
+	public function chatboxs_index(ChatRepository $chatRepository, CsrfTokenManagerInterface $csrfTokenManagerInterface): Response
+	{
 		//ajout des csrfs
 		$csrf = [];
 		foreach ($chatRepository->findBy(['deletedAt' => null]) as $chat) {
@@ -416,15 +410,42 @@ class ToolsController extends AbstractController
 		return new JsonResponse('ok');
 	}
 	#[Route('/admin/getLiipFilters', name: 'getLiipFilters', methods: ['GET'])]
-	public function getLiipFilters(): Response
+	public function getLiipFilters(FilterService $filterService): Response
 	{
 		$filters = [];
-		foreach (
-			array_keys($this->getParameter('liip_imagine.filter_sets'))
-			as $filter
-		) {
+		foreach (array_keys($this->getParameter('liip_imagine.filter_sets'))
+			as $filter) {
 			$filters[] = $filter;
 		}
 		return new JsonResponse($filters);
+	}
+	#[Route('/tools/getPngForTemplate/{liipfilter}', name: 'getLiipFilters', methods: ['GET'])]
+	public function createPngForTemplate(
+		FilterService $filterService,
+		string $liipfilter
+	): Response {
+		header("Content-Type: image/png"); //change the php file to an image
+		$image = @imagecreate(300, 300)
+			or die("Cannot Initialize new GD image stream");
+		$background = imagecolorallocate($image, 200, 200, 200);
+		$font_size = 20;
+		$angle = 0;
+		$font = '/app/assets/public/arial.ttf';
+		list($left, $bottom, $right,,, $top) = imageftbbox($font_size, $angle, $font, $liipfilter);
+		// Determine offset of text
+		$left_offset = ($right - $left) / 2;
+		$top_offset = ($bottom - $top) / 2;
+		// Generate coordinates
+		$x = 150 - $left_offset;
+		$y = 150 + $top_offset;
+		// Add text to image
+		imagettftext($image, $font_size, $angle, $x, $y, imagecolorallocate($image, 0, 0, 0), $font, $liipfilter);
+		imagepng($image, '/app/public/pngtemplate.png');
+
+		return new Response(
+			file_get_contents($filterService->getUrlOfFilteredImage('/pngtemplate.png', $liipfilter)),
+			Response::HTTP_OK,
+			['content-type' => 'image/png']
+		);
 	}
 }
