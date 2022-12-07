@@ -32,7 +32,18 @@ class ParametresController extends AbstractController
     public function index(ParametresRepository $parametresRepository, Request $request, PaginatorInterface $paginator): Response
     {
         $dql = $parametresRepository->index($request->query->get('filterValue', ''), ['id', 'nom', 'valeur'], $request->query->get('sort'), $request->query->get('direction'), false);
-        return $this->render('/parametres/index.html.twig', [
+        //génération des slugs en cas de slug vide
+        if (isset($dql[0]) && property_exists(new Parametres, 'slug')) {
+            foreach ($dql as $objet) {
+                if ($objet->getSlug() == '') {
+                    $objet->setSlug($objet->getId());
+                    $this->em->persist($objet);
+                }
+            }
+        }
+        $this->em->flush();
+        //fin de la génération des slugs
+        return $this->render('/base/parametres/index.html.twig', [
             'pagination' => $paginator->paginate($dql, $request->query->getInt('page', 1))
         ]);
     }
@@ -42,8 +53,8 @@ class ParametresController extends AbstractController
     #[Route('/deleted', name: 'parametres_deleted', methods: ['GET'])]
     public function deleted(ParametresRepository $parametresRepository, Request $request, PaginatorInterface $paginator): Response
     {
-        $dql = $parametresRepository->index($request->query->get('filterValue', ''), ['id', 'nom', 'valeur'], $request->query->get('sort', 'a.id'), $request->query->get('direction'), true);
-        return $this->render('/parametres/index.html.twig', [
+        $dql = $parametresRepository->index($request->query->get('filterValue', ''), ['id', 'nom', 'valeur'], $request->query->get('sort', 'a.id'), $request->query->get('direction'), null, true);
+        return $this->render('/base/parametres/index.html.twig', [
             'pagination' => $paginator->paginate($dql, $request->query->getInt('page', 1), 8)
         ]);
     }
@@ -51,17 +62,25 @@ class ParametresController extends AbstractController
     /*                                    CHAMP                                    */
     /* -------------------------------------------------------------------------- */
     /**
-     * @Route("/champ/{id}/{type}/{valeur}", name="parametres_champ", methods={"GET"})
+     * @Route("/champ/{id}/{type}/{valeur}/{one}", name="parametres_champ", methods={"GET"})
      */
-    public function champ(Parametres $parametres, $type = null, $valeur = null): Response
+    public function champ(ParametresRepository $parametresRepository, Parametres $parametres, $type = null, $valeur = null, $one = false): Response
     {
-        if ($type) {
-            $method = 'set' . $type;
-            $parametres->$method($valeur);
-            $this->em->persist($parametres);
-            $this->em->flush();
+        if ($one) {
+            foreach ($parametresRepository->findAll() as $objet) {
+                $method = 'set' . $type;
+                $objet->$method(false);
+                $this->em->persist($objet);
+            }
+
+            if ($type) {
+                $method = 'set' . $type;
+                $parametres->$method($valeur);
+                $this->em->persist($parametres);
+                $this->em->flush();
+            }
         }
-        return $this->redirectToRoute('parametres_index', [], Response::HTTP_SEE_OTHER);
+        return $this->redirectToRoute('/base/parametres_index', [], Response::HTTP_SEE_OTHER);
     }
     /* -------------------------------------------------------------------------- */
     /*                                NEW AND EDIT                                */
@@ -110,7 +129,7 @@ class ParametresController extends AbstractController
             $em->flush();
             return $this->redirectToRoute('parametres_index', [], Response::HTTP_SEE_OTHER);
         }
-        return $this->render('/parametres/new.html.twig', [
+        return $this->render('/base/parametres/new.html.twig', [
             'parametres' => $parametres,
             'form' => $form->createView()
         ]);
