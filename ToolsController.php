@@ -2,8 +2,8 @@
 
 namespace App\Controller\base;
 
-use App\Entity\Chatmessage;
-use App\Repository\ChatRepository;
+use App\Entity\base\Chatmessage;
+use App\Repository\base\ChatRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -19,7 +19,7 @@ use App\Security\EmailVerifier;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Contracts\Translation\TranslatorInterface;
-use App\Entity\Chat;
+use App\Entity\base\Chat;
 use Symfony\Component\Serializer\SerializerInterface;
 use DateTime;
 use Symfony\Component\Mercure\HubInterface;
@@ -377,16 +377,16 @@ fink.phar "http://localhost" --concurrency 12 --output=/app/tests/linktests.json
 			'chats' => $chatRepository->findBy(['deletedAt' => null]),
 			'csrf' => json_encode($csrf),
 			'template_cards' => file_get_contents(
-				'/app/templates/chat_template_cards.html.twig'
+				'/app/templates/base/chat_template_cards.html.twig'
 			),
 			'template_card' => file_get_contents(
-				'/app/templates/chat_template_card.html.twig'
+				'/app/templates/base/chat_template_card.html.twig'
 			),
 			'template_reponse' => file_get_contents(
-				'/app/templates/chat_template_reponse.html.twig'
+				'/app/templates/base/chat_template_reponse.html.twig'
 			),
 			'template_question' => file_get_contents(
-				'/app/templates/chat_template_question.html.twig'
+				'/app/templates/base/chat_template_question.html.twig'
 			),
 		]);
 	}
