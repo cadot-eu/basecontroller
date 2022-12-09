@@ -5,7 +5,7 @@ namespace  App\Controller\base;
 use DateTime;
 use App\Entity\base\Parametres;
 use App\Form\base\ParametresType;
-use App\Repository\base\ParametresRepository;
+use App\Repository\ParametresRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;

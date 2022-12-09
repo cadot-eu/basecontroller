@@ -3,7 +3,7 @@
 namespace App\Controller\base;
 
 use App\Entity\base\Chatmessage;
-use App\Repository\base\ChatRepository;
+use App\Repository\ChatRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -54,11 +54,11 @@ class ToolsController extends AbstractController
 	}
 
 	//accès à la partie admin du site
-	// #[Route('/admin', name: 'app_login')]
-	// public function admin(): Response
-	// {
-	//     return $this->render('admin/admin.html.twig', ['news' => file_exists('/app/git_news.json') ? array_slice(json_decode(file_get_contents('/app/git_news.json'), true), 0, 20) : '']);
-	// }
+	#[Route('/admin')]
+	public function admin(): Response
+	{
+		return $this->render('admin/admin.html.twig', ['news' => file_exists('/app/git_news.json') ? array_slice(json_decode(file_get_contents('/app/git_news.json'), true), 0, 20) : '']);
+	}
 
 	/* -------------------------------------------------------------------------- */
 	/*                        ajax pour uploader un fichier                       */
