@@ -53,16 +53,6 @@ class ToolsController extends AbstractController
 		$this->em = $em;
 	}
 
-<<<<<<< HEAD
-=======
-	//accès à la partie admin du site
-	#[Route('/admin')]
-	public function admin(): Response
-	{
-		return $this->render('admin/admin.html.twig', ['news' => file_exists('/app/git_news.json') ? array_slice(json_decode(file_get_contents('/app/git_news.json'), true), 0, 20) : '']);
-	}
-
->>>>>>> b7c61244cfe2523f1712f3772852a9b2bee783e9
 	/* -------------------------------------------------------------------------- */
 	/*                        ajax pour uploader un fichier                       */
 	/* -------------------------------------------------------------------------- */
