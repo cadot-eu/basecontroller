@@ -2,7 +2,7 @@
 
 namespace App\Controller\base;
 
-use App\Entity\base\Chatmessage;
+use App\Entity\Chatmessage;
 use App\Repository\ChatRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Routing\Annotation\Route;
@@ -19,7 +19,7 @@ use App\Security\EmailVerifier;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Contracts\Translation\TranslatorInterface;
-use App\Entity\base\Chat;
+use App\Entity\Chat;
 use Symfony\Component\Serializer\SerializerInterface;
 use DateTime;
 use Symfony\Component\Mercure\HubInterface;

@@ -3,7 +3,7 @@
 namespace  App\Controller\base;
 
 use DateTime;
-use App\Entity\base\Parametres;
+use App\Entity\Parametres;
 use App\Form\base\ParametresType;
 use App\Repository\ParametresRepository;
 use Doctrine\ORM\EntityManagerInterface;
