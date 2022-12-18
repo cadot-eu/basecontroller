@@ -441,15 +441,15 @@ fink.phar "http://localhost" --concurrency 12 --output=/app/tests/linktests.json
 			['content-type' => 'image/png']
 		);
 	}
-	/**
-	 * @Route(name="sentry_test", path="/_sentry-test")
-	 */
-	public function testLog()
-	{
-		// the following code will test if monolog integration logs to sentry
-		$this->logger->error('My custom logged error.');
+	// /**
+	//  * @Route(name="sentry_test", path="/_sentry-test")
+	//  */
+	// public function testLog()
+	// {
+	// 	// the following code will test if monolog integration logs to sentry
+	// 	$this->logger->error('My custom logged error.');
 
-		// the following code will test if an uncaught exception logs to sentry
-		throw new \RuntimeException('Example exception.');
-	}
+	// 	// the following code will test if an uncaught exception logs to sentry
+	// 	throw new \RuntimeException('Example exception.');
+	// }
 }
