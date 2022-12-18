@@ -12,10 +12,13 @@ class ErrorController extends ToolsController
     #[Route('/error', name: 'app_error')]
     public function show($exception): Response
     {
-        return $this->render('errors.html.twig', [
-            'controller_name' => 'ErrorController',
-            'message' => $exception->getMessage(),
-            'code' => $exception->getStatusCode(),
-        ]);
+        if ($_ENV['APP_ENV'] == 'dev') {
+            dd($exception);
+        } else
+            return $this->render('errors.html.twig', [
+                'controller_name' => 'ErrorController',
+                'message' => $exception->getMessage(),
+                'code' => $exception->getStatusCode(),
+            ]);
     }
 }

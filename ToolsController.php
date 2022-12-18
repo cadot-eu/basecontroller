@@ -32,6 +32,7 @@ use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 use PHPUnit\Extensions\Selenium2TestCase\URL;
 use Psy\Readline\Hoa\EventSource;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
 class ToolsController extends AbstractController
 {
@@ -41,12 +42,8 @@ class ToolsController extends AbstractController
 
 	protected $logger, $translator, $em;
 
-	public function __construct(
-		EmailVerifier $emailVerifier,
-		LoggerInterface $logger,
-		TranslatorInterface $translator,
-		EntityManagerInterface $em
-	) {
+	public function __construct(EmailVerifier $emailVerifier, LoggerInterface $logger, TranslatorInterface $translator, EntityManagerInterface $em)
+	{
 		$this->emailVerifier = $emailVerifier;
 		$this->logger = $logger;
 		$this->translator = $translator;
@@ -452,4 +449,27 @@ fink.phar "http://localhost" --concurrency 12 --output=/app/tests/linktests.json
 	// 	// the following code will test if an uncaught exception logs to sentry
 	// 	throw new \RuntimeException('Example exception.');
 	// }
+
+
+	public function generateSitemaps(EntityManagerInterface $em, array $repositories, $request)
+	{
+		$baseurl = $request->getSchemeAndHttpHost() . '/';
+		$urls = [];
+		foreach ($repositories as $repository) {
+			$posts = $em->getRepository('App\\Entity\\' . ucwords($repository))->findBy(['deletedAt' => null, 'etat' => 'en ligne']);
+
+			foreach ($posts as $post) {
+				$url = ['loc' => $baseurl . "les-" . $repository . "s/" . $post->getSlug()];
+				if ($post->getUpdatedAt() !== null) $url['lastmod'] = $post->getUpdatedAt()->format('Y-m-d');
+				$urls[] = $url;
+			}
+		}
+		$response = new Response(
+			$this->renderView('/sitemap.html.twig', ['urls' => $urls]),
+			200
+		);
+		$response->headers->set('Content-Type', 'text/xml');
+
+		return $response;
+	}
 }
