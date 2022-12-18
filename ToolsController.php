@@ -33,6 +33,7 @@ use PHPUnit\Extensions\Selenium2TestCase\URL;
 use Psy\Readline\Hoa\EventSource;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Symfony\Component\Process\Process;
 
 class ToolsController extends AbstractController
 {
@@ -154,36 +155,15 @@ class ToolsController extends AbstractController
 			name: 'selectandcopy'
 		)
 	]
-	public function SAndCopy(
-		EntityManagerInterface $em,
-		$entitie,
-		$champs,
-		$recherche,
-		$affichage,
-		$copy,
-		$limit
-	) {
-		//recherche dans les titres
-		$query = $em
-			->createQuery(
-				'SELECT p
-FROM App\Entity\\' .
-					ucfirst($entitie) .
-					' p
-WHERE p.' .
-					$champs .
-					' LIKE :recherche'
-			)
-			->setParameter('recherche', '%' . $recherche . '%');
+	public function SAndCopy(EntityManagerInterface $em, $entitie, $champs, $recherche, $affichage, $copy, $limit)
+	{ //recherche dans les titres
+		$query = $em->createQuery('SELECT p FROM App\Entity\\' . ucfirst($entitie) . ' p WHERE p.' . $champs . ' LIKE :recherche')->setParameter('recherche', '%' . $recherche . '%');
 		$entities = array_slice($query->getResult(), 0, $limit);
 		$tablo = [];
 		$getaffichage = 'get' . ucwords($affichage);
 		$getcopy = 'get' . ucwords($copy);
 		foreach ($entities as $entity) {
-			$tablo[] = [
-				'affichage' => $entity->$getaffichage(),
-				'copy' => $entity->$getcopy(),
-			];
+			$tablo[] = ['affichage' => $entity->$getaffichage(), 'copy' => $entity->$getcopy(),];
 		}
 		return new JsonResponse($tablo);
 	}
@@ -194,9 +174,12 @@ WHERE p.' .
 	#[Route('/superadmin/linktester', name: 'linktester')]
 	public function linktester()
 	{
-		$retour = exec('php /app/
-fink.phar "http://localhost" --concurrency 12 --output=/app/tests/linktests.json --exclude-url=_profilerecho ');
-		return new JsonResponse($retour);
+		$file = '';
+		if (file_exists('/app/tests/linktests.json'))
+			$file = file_get_contents('/app/tests/linktests.json');
+		return $this->render('base/test_links.html.twig', [
+			'links' => $file
+		]);
 	}
 	/* -------------------------------------------------------------------------- */
 	/*           Sert pour les indexs pour changer l'ordre des éléments           */
@@ -214,12 +197,8 @@ fink.phar "http://localhost" --concurrency 12 --output=/app/tests/linktests.json
 	#[
 		route('/admin/changeordre/{entity}/{id}/{action}', name: 'change_ordre', methods: ['GET'])
 	]
-	public function changeOrdre(
-		EntityManagerInterface $em,
-		string $entity,
-		int $id,
-		string $action
-	): Response {
+	public function changeOrdre(EntityManagerInterface $em, string $entity, int $id, string $action): Response
+	{
 		$faqs = $em->getRepository('App\\Entity\\' . ucwords($entity))->findBy([], ['ordre' => 'ASC']);
 		foreach ($faqs as $num => $faq) {
 			if ($faq->getId() == $id) {
@@ -291,32 +270,15 @@ fink.phar "http://localhost" --concurrency 12 --output=/app/tests/linktests.json
 
 		return new JsonResponse(['message' => 'ok']);
 	}
-	#[
-		route(
-			'/chatGetMessages/{user}',
-			name: 'chatGetMessages',
-			methods: ['GET']
-		)
-	]
-	public function chatgetmessages(
-		ChatRepository $chatRepository,
-		Request $request
-	) {
-		$chat = $chatRepository->findOneBy([
-			'user' => $request->get('user'),
-			'deletedAt' => null,
-		]);
+	#[route('/chatGetMessages/{user}', name: 'chatGetMessages', methods: ['GET'])]
+	public function chatgetmessages(ChatRepository $chatRepository, Request $request)
+	{
+		$chat = $chatRepository->findOneBy(['user' => $request->get('user'), 'deletedAt' => null,]);
 		$retour = [];
 		if ($chat) {
 			$messages = $chat->getMessages();
 			foreach ($messages as $message) {
-				$retour[] = [
-					'texte' => $message->getTexte(),
-					'date' => $message->getCreatedAt()
-						? $message->getCreatedAt()->format('d/m/Y H:i:s')
-						: '',
-					'type' => $message->getType(),
-				];
+				$retour[] = ['texte' => $message->getTexte(), 'date' => $message->getCreatedAt() ? $message->getCreatedAt()->format('d/m/Y H:i:s') : '', 'type' => $message->getType(),];
 			}
 		}
 		return new JsonResponse(array_reverse($retour));
