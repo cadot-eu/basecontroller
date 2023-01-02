@@ -123,17 +123,7 @@ class ToolsController extends AbstractController
 		);
 	}
 
-	/* -------------------------------------------------------------------------- */
-	/*                        ajax pour uploader un fichier                       */
-	/* -------------------------------------------------------------------------- */
 
-	#[Route('/flashmessage', name: 'flashmessage', methods: ['POST'])]
-	public function flashmessage(request $request): Response
-	{
-		$content = json_decode($request->getContent());
-		$this->addFlash($content->type, $content->message);
-		return new response('ok');
-	}
 
 	/* ------------ permet de sélectionner dans une entité un élément ----------- */
 	/* ------ et d'avoir une url coper dans le presse papier par sélection ------ */
