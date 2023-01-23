@@ -10,14 +10,14 @@ use Stripe;
 
 class StripeController extends AbstractController
 {
-    #[Route('/stripe', name: 'app_stripe')]
+    #[Route('/superadmin/stripe', name: 'app_stripe')]
     public function index(): Response
     {
-        return $this->render('/base/stripe.html.twig',);
+        return $this->render('/base/stripe.html.twig');
     }
 
 
-    #[Route('/stripe/create-charge', name: 'app_stripe_charge', methods: ['POST'])]
+    #[Route('/superadmin/stripe/create-charge', name: 'app_stripe_charge', methods: ['POST'])]
     public function createCharge(Request $request)
     {
         Stripe\Stripe::setApiKey($_ENV["STRIPE_SECRET"]);
