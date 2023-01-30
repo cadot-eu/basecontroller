@@ -34,6 +34,7 @@ use Psy\Readline\Hoa\EventSource;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Process\Process;
+use Stripe\Stripe;
 
 class ToolsController extends AbstractController
 {
