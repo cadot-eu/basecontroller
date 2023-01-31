@@ -35,6 +35,7 @@ use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Process\Process;
 use Stripe\Stripe;
+use Stripe\Checkout\Session;
 
 class ToolsController extends AbstractController
 {
