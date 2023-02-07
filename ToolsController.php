@@ -68,18 +68,9 @@ class ToolsController extends AbstractController
 	 * @return Response A JSON response with the URL of the uploaded file.
 	 */
 	#[Route('/upload/{name}/{filter}', name: 'upload')]
-	public function upload(
-		FilterService $filterService,
-		FileUploader $fileUploader,
-		Request $request,
-		string $name,
-		$filter = null
-	): Response {
-		$filename = $fileUploader->upload(
-			$request->files->get('upload'),
-			$name . '/',
-			$filter
-		);
+	public function upload(FilterService $filterService, FileUploader $fileUploader, Request $request, string $name, $filter = null): Response
+	{
+		$filename = $fileUploader->upload($request->files->get('upload'), $name . '/', $filter);
 		return new JsonResponse(['url' => '/' . $filename]);
 	}
 	/* -------------------------------------------------------------------------- */
