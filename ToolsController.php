@@ -402,7 +402,6 @@ class ToolsController extends AbstractController
 		$urls = [];
 		foreach ($repositories as $repository) {
 			$posts = $em->getRepository('App\\Entity\\' . ucwords($repository))->findBy(['deletedAt' => null, 'etat' => 'en ligne']);
-
 			foreach ($posts as $post) {
 				$url = ['loc' => $baseurl . "les-" . $repository . "s/" . $post->getSlug()];
 				if ($post->getUpdatedAt() !== null) $url['lastmod'] = $post->getUpdatedAt()->format('Y-m-d');
