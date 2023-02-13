@@ -14,7 +14,7 @@ class ErrorController extends ToolsController
     #[Route('/error', name: 'app_error')]
     public function show($exception, LoggerInterface $logger, HttpClientInterface $httpClient): Response
     {
-        if ($_ENV['APP_ENV'] == 'dd') {
+        if ($_ENV['APP_ENV'] == 'dev') {
             dd($exception);
         } else {
             if ($exception->getStatusCode() == 404) {
