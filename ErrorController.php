@@ -14,14 +14,14 @@ class ErrorController extends ToolsController
     #[Route('/error', name: 'app_error')]
     public function show($exception, LoggerInterface $logger, HttpClientInterface $httpClient): Response
     {
-        if ($_ENV['APP_ENV'] == 'dev') {
+        if ($_ENV['APP_ENV'] == 'dd') {
             dd($exception);
         } else {
             if ($exception->getStatusCode() == 404) {
                 $error = json_decode(file_get_contents('/app/404.json'), true);
                 $helperip = new IpHelper($httpClient);
                 $infos = $helperip->getInformations();
-                $error[$_SERVER['REQUEST_URI']][date('Y-m-d H:i:s')] = [
+                $error[$_SERVER['REQUEST_URI']][] = [
                     'referer' => $_SERVER['HTTP_REFERER'] ?? null,
                     'user' => $this->getUser() ? $this->getUser()->getId() : null,
                     'ip' => $_SERVER['REMOTE_ADDR'],
@@ -34,7 +34,9 @@ class ErrorController extends ToolsController
                     'timezone' => $infos['timezone'],
                     'zip' => $infos['zip'],
                     'query' => $infos['query'],
-                    'regionName' => $infos['regionName']
+                    'regionName' => $infos['regionName'],
+                    'url' => $_SERVER['REQUEST_URI'],
+                    'date' => date('Y-m-d H:i:s'),
                 ];
                 file_put_contents('/app/404.json', json_encode($error, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
             } else {
