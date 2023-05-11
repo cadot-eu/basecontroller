@@ -397,7 +397,10 @@ class ToolsController extends AbstractController
         $baseurl = $request->getSchemeAndHttpHost() . '/';
         $urls = [];
         foreach ($repositories as $repository) {
-            $posts = $em->getRepository('App\\Entity\\' . ucwords($repository))->findBy(['deletedAt' => null, 'etat' => 'en ligne']);
+            $objetEntity = 'App\Entity\\' . ucfirst($repository);
+            $reflexion = new \ReflectionClass(new $objetEntity());
+            $etat=$reflexion->hasProperty('etat')?['etat' => 'en ligne']:[];
+            $posts = $em->getRepository('App\\Entity\\' . ucwords($repository))->findBy(array_merge(['deletedAt' => null], $etat), ['updatedAt' => 'DESC']);
             foreach ($posts as $post) {
                 $url = ['loc' => $baseurl . "les-" . $repository . "s/" . $post->getSlug()];
                 if ($post->getUpdatedAt() !== null) {
