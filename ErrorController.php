@@ -35,7 +35,7 @@ class ErrorController extends ToolsController
                     'regionName' => $infos['regionName'],
                     'url' => $_SERVER['REQUEST_URI'],
                     'date' => date('Y-m-d H:i:s'),
-                    'referer' => $_SESSION['referer']
+                    'referer' => isset($_SESSION['referer']) ? $_SESSION['referer'] : null,
                 ];
                 file_put_contents('/app/404.json', json_encode($error, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
             } else {
