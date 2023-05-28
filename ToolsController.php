@@ -22,6 +22,7 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 use App\Entity\Chat;
 use Symfony\Component\Serializer\SerializerInterface;
 use DateTime;
+use Flasher\Prime\FlasherInterface;
 use Symfony\Component\Mercure\HubInterface;
 use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
 use Symfony\Component\Mercure\Update;
@@ -43,10 +44,11 @@ class ToolsController extends AbstractController
     //RegistrationController comme base ;-)
     private EmailVerifier $emailVerifier;
 
-    protected $logger, $translator, $em;
+    protected $logger, $translator, $em, $flasher;
 
-    public function __construct(EmailVerifier $emailVerifier, LoggerInterface $logger, TranslatorInterface $translator, EntityManagerInterface $em)
+    public function __construct(EmailVerifier $emailVerifier, LoggerInterface $logger, TranslatorInterface $translator, EntityManagerInterface $em, FlasherInterface $flasher)
     {
+        $this->flasher = $flasher;
         $this->emailVerifier = $emailVerifier;
         $this->logger = $logger;
         $this->translator = $translator;
@@ -275,7 +277,7 @@ class ToolsController extends AbstractController
         $now = new DateTime('now');
         foreach (
             $chatRepository->findBy(['deletedAt' => null], ['id' => 'DESC'])
-        as $chat
+ as $chat
         ) {
             $messages = [];
             foreach ($chat->getMessages() as $message) {
@@ -354,7 +356,7 @@ class ToolsController extends AbstractController
         $filters = [];
         foreach (
             array_keys($this->getParameter('liip_imagine.filter_sets'))
-        as $filter
+ as $filter
         ) {
             $filters[] = $filter;
         }
