@@ -44,11 +44,10 @@ class ToolsController extends AbstractController
     //RegistrationController comme base ;-)
     private EmailVerifier $emailVerifier;
 
-    protected $logger, $translator, $em, $flasher;
+    protected $logger, $translator, $em;
 
-    public function __construct(EmailVerifier $emailVerifier, LoggerInterface $logger, TranslatorInterface $translator, EntityManagerInterface $em, FlasherInterface $flasher)
+    public function __construct(EmailVerifier $emailVerifier, LoggerInterface $logger, TranslatorInterface $translator, EntityManagerInterface $em)
     {
-        $this->flasher = $flasher;
         $this->emailVerifier = $emailVerifier;
         $this->logger = $logger;
         $this->translator = $translator;
@@ -391,11 +390,14 @@ class ToolsController extends AbstractController
             ->subject('Email test')
             ->text('Sending emails is fun again!')
             ->html('<p>See Twig integration for better HTML integration!</p>');
-        try {
-            $mailer->send($email);
-        } catch (TransportExceptionInterface $e) {
-            throw new \Exception($e->getMessage());
-        }
+            try {
+                $mailer->send($email);
+               $this->addFlash('success','Votre message a bien été envoyé');
+            } catch (TransportExceptionInterface $e) {
+                $this->addFlash('error','Une erreur est survenue lors de l\'envoi du message, l\'administrateur a été prévenu et votre message sera traité dans les plus brefs délais');
+                captureMessage('Envoie mail: ' . $e, new Severity('error'), new EventHint(['tags' => ['resolver' => 'mick']]));
+                throw new \Exception($e);
+            }
         return new JsonResponse('ok');
     }
     #[Route('/admin/getLiipFilters', name: 'getLiipFilters', methods: ['GET'])]
@@ -488,4 +490,26 @@ public function delete(Request $request, Chat $chat, EntityManagerInterface $em)
 
         return $response;
     }
+    
+
+
+//function pour tester la vaidité d'un siret par le site de l'insee, on prend le bearer dans $_ENV['INSEE_TOKEN']
+#[Route('/admin/siret/{siret}', name: 'veriffunction_siret', methods: ['GET'])]
+public function siret($siret): Response
+{
+    // URL du site Web de la vérification SIRET
+$url = 'https://api.insee.fr/entreprises/sirene/V3/siret/' . $siret;
+
+// Création d'un objet cURL
+$ch = curl_init();
+// Configuration des options
+curl_setopt($ch, CURLOPT_URL, $url );
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($ch, CURLOPT_HTTPHEADER, [
+    'Authorization: Bearer ' . $_ENV['INSEE_TOKEN'],
+]);
+// Exécution de la requête et on retourne le résultat
+return new JsonResponse(curl_exec($ch));
+}
+
 }
