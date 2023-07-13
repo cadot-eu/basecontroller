@@ -22,7 +22,6 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 use App\Entity\Chat;
 use Symfony\Component\Serializer\SerializerInterface;
 use DateTime;
-use Flasher\Prime\FlasherInterface;
 use Symfony\Component\Mercure\HubInterface;
 use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
 use Symfony\Component\Mercure\Update;

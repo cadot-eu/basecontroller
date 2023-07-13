@@ -29,7 +29,7 @@ class StripeController extends AbstractController
         ]);
         $this->addFlash(
             'success',
-            'Payment Successful!'
+            'Paiement effectué avec succès'
         );
         return $this->redirectToRoute('app_stripe', [], Response::HTTP_SEE_OTHER);
     }
