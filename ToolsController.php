@@ -498,6 +498,29 @@ class ToolsController extends AbstractController
     #[Route('/admin/siret/{siret}', name: 'veriffunction_siret', methods: ['GET'])]
     public function siret($siret): Response
     {
+        //création du token https://api.insee.fr/token si pas de token en cookies
+        if (!isset($_COOKIE['tokeninsee'])) {
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_URL, 'https://api.insee.fr/token');
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            //on ajoute grant_type=client_credentials
+            curl_setopt($ch, CURLOPT_POSTFIELDS, 'grant_type=client_credentials');
+            //on ajoute le client_id et le client_secret
+            \curl_setopt($ch, CURLOPT_USERPWD, $_ENV['INSEE_CLIENT_ID'] . ':' . $_ENV['INSEE_CLIENT_SECRET']);
+            //on ajoute le content type
+            curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                'Content-Type: application/x-www-form-urlencoded',
+            ]);
+            //on exécute la requête
+            $output = curl_exec($ch);
+            //on ferme la session cURL
+            curl_close($ch);
+            //on récupère le token
+            $token = json_decode($output)->access_token;
+            //on met le token en cookies
+            setcookie('tokeninsee', $token, time() + 3600, '/');
+        }
+
         // URL du site Web de la vérification SIRET
         $url = 'https://api.insee.fr/entreprises/sirene/V3/siret/' . $siret;
 
@@ -507,7 +530,7 @@ class ToolsController extends AbstractController
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_HTTPHEADER, [
-            'Authorization: Bearer ' . $_ENV['INSEE_TOKEN'],
+            'Authorization: Bearer ' .$_COOKIE['tokeninsee'],
         ]);
         // Exécution de la requête et on retourne le résultat
         $output = curl_exec($ch);
