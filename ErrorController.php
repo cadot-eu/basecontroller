@@ -15,14 +15,18 @@ class ErrorController extends ToolsController
     #[Route('/error', name: 'app_error')]
     public function show($exception, LoggerInterface $logger, HttpClientInterface $httpClient, Request $request): Response
     {
+$iphelper = new IpHelper($httpClient);
+$ip = $iphelper->getIp();
+        $urlNotSave=['/.well-known/traffic-advice'];
         if ($_ENV['APP_ENV'] != 'dev') {
-            if ($exception->getStatusCode() == 404) {
+            if ($exception->getStatusCode() == 404 && !in_array($_SERVER['REQUEST_URI'], $urlNotSave)) {
                 $error = json_decode(file_get_contents('/app/404.json'), true);
                 $helperip = new IpHelper($httpClient);
                 $infos = $helperip->getInformations();
+              
                 $error[$_SERVER['REQUEST_URI']][] = [
                     'user' => $this->getUser() ? $this->getUser()->getId() : null,
-                    'ip' => $_SERVER['REMOTE_ADDR'],
+                    'ip' => $ip,
                     'user_agent' => $_SERVER['HTTP_USER_AGENT'],
                     'country' => $infos['country'],
                     'city' => $infos['city'],
