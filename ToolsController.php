@@ -48,7 +48,7 @@ class ToolsController extends AbstractController
 
     protected $logger, $translator, $em, $mailer;
 
-    public function __construct(EmailVerifier $emailVerifier, LoggerInterface $logger, TranslatorInterface $translator, EntityManagerInterface $em,MailerInterface $mailer)
+    public function __construct(EmailVerifier $emailVerifier, LoggerInterface $logger, TranslatorInterface $translator, EntityManagerInterface $em, MailerInterface $mailer)
     {
         $this->emailVerifier = $emailVerifier;
         $this->logger = $logger;
@@ -530,33 +530,70 @@ class ToolsController extends AbstractController
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_HTTPHEADER, [
-            'Authorization: Bearer ' .$_COOKIE['tokeninsee'],
+            'Authorization: Bearer ' . $_COOKIE['tokeninsee'],
         ]);
         // Exécution de la requête et on retourne le résultat
         $output = curl_exec($ch);
         // Fermeture de la session cURL
         curl_close($ch);
-//on retourne le résultat
+        //on retourne le résultat
 
         return new Response($output);
     }
     //function pour envoyer un mail
-    public function sendmail($to, $subject, $body,$message=true)
+    public function sendmail($to, $subject, $body, $message = true)
     {
-        if($to='admin')
-            $to=$_ENV['MAILER_CONTACT'];
+        if ($to = 'admin')
+            $to = $_ENV['MAILER_CONTACT'];
         $email = (new Email())
-        ->to($to)
-        ->subject($subject)
-        ->text($body);
+            ->to($to)
+            ->subject($subject)
+            ->text($body);
         try {
             $this->mailer->send($email);
-            if($message)
-           $this->addFlash('success','Votre message a bien été envoyé');
+            if ($message)
+                $this->addFlash('success', 'Votre message a bien été envoyé');
         } catch (TransportExceptionInterface $e) {
-            $this->addFlash('error','Une erreur est survenue lors de l\'envoi du message, l\'administrateur a été prévenu et votre message sera traité dans les plus brefs délais');
+            $this->addFlash('error', 'Une erreur est survenue lors de l\'envoi du message, l\'administrateur a été prévenu et votre message sera traité dans les plus brefs délais');
             captureMessage('Envoie mail: ' . $e, new Severity('error'), new EventHint(['tags' => ['resolver' => 'mick']]));
             throw new \Exception($e);
         }
+    }
+
+    /**
+     * Retrieves the statistics for each entity in the given list.
+     *
+     * @param array $liste The list of entities and their corresponding queries. exemple: ['bien' => ['etat' => ['en ligne', 'brouillon']], 'user' => ['situation' => ['actif', 'inactif']]];
+   
+     * @return array The statistics for each entity.
+     */
+    public function Etats_Repository(array $liste): array
+    {
+        // Initialize the statistics array
+        $stats = [];
+
+        // Iterate through each entity and its query
+        foreach ($liste as $stat => $demande) {
+            // Get the repository for the entity
+            $Repository = $this->em->getRepository('App\Entity\\' . ucfirst($stat));
+
+            // Initialize the temporary array for storing query results
+            $tab = [];
+
+            // Iterate through each query and its values
+            foreach ($demande as $key => $values) {
+                // Iterate through each value and count the number of entities satisfying the query
+                foreach ($values as $value) {
+                    $tab[$key][$value] = count($Repository->findBy([$key => $value]));
+                }
+            }
+
+            // Store the query results in the statistics array
+            $stats['data'][$stat] = $tab;
+            $stats['liste'] = $liste;
+        }
+
+        // Return the statistics
+        return $stats;
     }
 }
