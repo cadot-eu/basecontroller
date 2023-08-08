@@ -567,7 +567,7 @@ class ToolsController extends AbstractController
    
      * @return array The statistics for each entity.
      */
-    public function Etats_Repository(array $liste): array
+    public function Etats_Repository(array $liste, EntityManagerInterface $em): array
     {
         // Initialize the statistics array
         $stats = [];
@@ -575,7 +575,7 @@ class ToolsController extends AbstractController
         // Iterate through each entity and its query
         foreach ($liste as $stat => $demande) {
             // Get the repository for the entity
-            $Repository = $this->em->getRepository('App\Entity\\' . ucfirst($stat));
+            $Repository = $em->getRepository('App\Entity\\' . ucfirst($stat));
 
             // Initialize the temporary array for storing query results
             $tab = [];
