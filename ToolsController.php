@@ -39,6 +39,8 @@ use Stripe\Checkout\Session;
 use Sentry\Severity;
 use Sentry\EventHint;
 use Dompdf\Adapter\GD;
+use Symfony\Component\Notifier\Message\SmsMessage;
+use App\Entity\User;
 
 class ToolsController extends AbstractController
 {
@@ -558,6 +560,42 @@ class ToolsController extends AbstractController
             captureMessage('Envoie mail: ' . $e, new Severity('error'), new EventHint(['tags' => ['resolver' => 'mick']]));
             throw new \Exception($e);
         }
+    }
+    public function sendsms($to, $message)
+    {
+        $options = (new ProviderOptions())
+            ->setPriority('high');
+
+        $sms = new SmsMessage(
+            // the phone number to send the SMS message to
+            $to,
+            // the message
+            $message,
+            // you can also add options object implementing MessageOptionsInterface
+            $options
+        );
+
+        return $texter->send($sms);
+    }
+    public function notifier(User $user, $message = '', $subject = ''): Response
+    {
+        if ($message) {
+            if ($subject == '') $subjetc = 'Information de ' . explode('<', _ENV['MAILER_FROM'])[0];
+            //on regarde les paramètres de notification de l'utilisateur
+            $params = $user->getParametres()['Communication_principale']['valeur'];
+            $reponse = [];
+            foreach ($params as $param) {
+                switch ($param) {
+                    case 'sms':
+                        $reponse[] = $this->sendsms($user->getTelephone(), $message);
+                        break;
+                    case 'email':
+                        $reponse[] = $this->sendmail($user->getEmail(), $subject, $message, false);
+                        break;
+                }
+            }
+        }
+        return new JsonResponse($reponse);
     }
 
     /**
