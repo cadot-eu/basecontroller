@@ -545,7 +545,7 @@ class ToolsController extends AbstractController
     public function sendmail($to, $subject, $body, $message = true)
     {
         if ($to = 'admin')
-            $to = $_ENV['MAILER_CONTACT'];
+            $to = $_ENV['MAILER_SENDER'];
         $email = (new Email())
             ->to($to)
             ->subject($subject)
