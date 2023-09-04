@@ -32,8 +32,6 @@ use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Process\Process;
 use Stripe\Stripe;
 use Stripe\Checkout\Session;
-use Sentry\Severity;
-use Sentry\EventHint;
 use Dompdf\Adapter\GD;
 use Symfony\Component\Notifier\Message\SmsMessage;
 use App\Entity\User;
