@@ -2,8 +2,6 @@
 
 namespace App\Controller\base;
 
-use App\Entity\Chatmessage;
-use App\Repository\ChatRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -19,7 +17,6 @@ use App\Security\EmailVerifier;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Contracts\Translation\TranslatorInterface;
-use App\Entity\Chat;
 use Symfony\Component\Serializer\SerializerInterface;
 use DateTime;
 use Symfony\Component\Mercure\HubInterface;
@@ -47,15 +44,16 @@ class ToolsController extends AbstractController
     //RegistrationController comme base ;-)
     private EmailVerifier $emailVerifier;
 
-    protected $logger, $translator, $em, $mailer;
+    protected $logger, $translator, $em, $mailer, $fileUploader;
 
-    public function __construct(EmailVerifier $emailVerifier, LoggerInterface $logger, TranslatorInterface $translator, EntityManagerInterface $em, MailerInterface $mailer)
+    public function __construct(EmailVerifier $emailVerifier, LoggerInterface $logger, TranslatorInterface $translator, EntityManagerInterface $em, MailerInterface $mailer, FileUploader $fileUploader)
     {
         $this->emailVerifier = $emailVerifier;
         $this->logger = $logger;
         $this->translator = $translator;
         $this->em = $em;
         $this->mailer = $mailer;
+        $this->fileUploader = $fileUploader;
     }
 
     /* -------------------------------------------------------------------------- */
@@ -223,165 +221,7 @@ class ToolsController extends AbstractController
             Response::HTTP_SEE_OTHER
         );
     }
-    #[route('/chatSend/{user}', name: 'chatsend', methods: ['POST'])]
-    /**
-     * The function `chatsend` receives a chat message from a user, creates a new chat if it doesn't
-     * exist, adds the message to the chat, and saves it to the database.
-     * 
-     * @param ChatRepository chatRepository The `` parameter is an instance of the
-     * `ChatRepository` class, which is responsible for retrieving and persisting `Chat` entities from
-     * the database.
-     * @param Request request The `` parameter is an instance of the `Request` class, which
-     * represents an HTTP request. It contains information about the request, such as the request method,
-     * headers, and request parameters.
-     * @param EntityManagerInterface em The "em" parameter is an instance of the EntityManagerInterface
-     * class, which is responsible for managing the persistence of objects in the database. It provides
-     * methods for persisting, updating, and deleting entities, as well as querying the database.
-     * @param HubInterface hub The `` parameter is an instance of the `HubInterface` class. It is
-     * used for broadcasting messages to subscribed clients. In this code, it is likely used to notify
-     * clients about the new chat message that was sent.
-     * 
-     * @return The code is returning a JSON response with the message 'ok'.
-     */
-    public function chatsend(ChatRepository $chatRepository, Request $request, EntityManagerInterface $em, HubInterface $hub)
-    {
-        $content = json_decode($request->getContent());
-        $chat = $chatRepository->findOneBy(['user' => $request->get('user')]);
-        if (!$chat) {
-            $chat = new Chat();
-            $chat->setUser($request->get('user'));
-        }
-        $chat->setDeletedAt(null); //on réactive l'archive
-        $chatmessage = new Chatmessage();
-        $chatmessage->setTexte($content->message);
-        $chatmessage->setType($content->type);
-        $chatmessage->setcreatedAt(new \DateTime());
-        $chat->addMessage($chatmessage);
-        $chat->setupdatedAt(new \DateTime());
-        $em->persist($chat);
-        $em->flush();
-        return new JsonResponse(['message' => 'ok']);
-    }
 
-    #[route('/chatGetMessages/{user}', name: 'chatGetMessages', methods: ['GET'])]
-    /**
-     * The function retrieves chat messages for a specific user and returns them in reverse order as a
-     * JSON response.
-     * 
-     * @param ChatRepository chatRepository The `` parameter is an instance of the
-     * `ChatRepository` class. It is responsible for retrieving chat data from the database.
-     * @param Request request The `` parameter is an instance of the `Request` class, which is
-     * typically used to handle HTTP requests in a web application. It contains information about the
-     * current request, such as the request method, headers, and query parameters.
-     * 
-     * @return a JSON response containing an array of messages. Each message in the array has the
-     * following properties: 'texte' (the message text), 'date' (the message creation date in the format
-     * 'd/m/Y H:i:s'), and 'type' (the message type). The messages are retrieved from the chat
-     * repository based on the user provided in the request.
-     */
-    public function chatgetmessages(ChatRepository $chatRepository, Request $request)
-    {
-        $chat = $chatRepository->findOneBy(['user' => $request->get('user'), 'deletedAt' => null,]);
-        $retour = [];
-        if ($chat) {
-            $messages = $chat->getMessages();
-            foreach ($messages as $message) {
-                $retour[] = ['texte' => $message->getTexte(), 'date' => $message->getCreatedAt() ? $message->getCreatedAt()->format('d/m/Y H:i:s') : '', 'type' => $message->getType(),];
-            }
-        }
-        return new JsonResponse(array_reverse($retour));
-    }
-    #[route('/admin/chatGet', name: 'chatGet', methods: ['GET'])]
-    /**
-     * The function retrieves chat data from the database, including messages and their details, and
-     * returns it as a JSON response.
-     * 
-     * @param ChatRepository chatRepository An instance of the ChatRepository class, which is
-     * responsible for retrieving chat data from the database.
-     * @param Request request The `` parameter is an instance of the `Request` class, which
-     * represents an HTTP request. It contains information about the request such as the request method,
-     * headers, query parameters, and request body.
-     * 
-     * @return a JSON response containing an array of chat objects. Each chat object contains
-     * information about the user, chat ID, last updated time, and an array of messages. Each message
-     * object contains the message text, creation time, and message type.
-     */
-    public function chatget(ChatRepository $chatRepository, Request $request)
-    {
-        $retour = [];
-        $now = new DateTime('now');
-        foreach ($chatRepository->findBy(['deletedAt' => null], ['updatedAt' => 'DESC']) as $chat) {
-            $messages = [];
-            foreach ($chat->getMessages() as $message) {
-                $messages[] = [
-                    'texte' => $message->getTexte(),
-                    'created_in' => $message->getCreatedAt()
-                        ? $now
-                        ->diff($message->getCreatedAt())
-                        ->format('%djour %hh %imn %Ss')
-                        : '',
-                    'type' => $message->getType(),
-                ];
-            }
-            $retour[] = [
-                'user' => $chat->getUser(),
-                'id' => $chat->getId(),
-                'updated_in' => $chat->getUpdatedAt()
-                    ? $now
-                    ->diff($chat->getUpdatedAt())
-                    ->format('%d jour %hh %imn %Ss')
-                    : '',
-                'messages' => array_reverse($messages),
-            ];
-        }
-
-
-        return new JsonResponse($retour);
-    }
-    #[Route('/admin/chatboxs/{id?}', name: 'chatboxs_index', methods: ['GET'])]
-    /**
-     * The function `chatboxs_index` renders a chatbox index page in PHP, including CSRF tokens and
-     * templates for chat cards, responses, and questions.
-     * 
-     * @param ChatRepository chatRepository The `` parameter is an instance of the
-     * `ChatRepository` class. It is used to retrieve chat data from the database.
-     * @param CsrfTokenManagerInterface csrfTokenManagerInterface The `csrfTokenManagerInterface` is an
-     * interface that provides methods for generating and validating CSRF tokens. It is used to generate
-     * a CSRF token for each chat object in the chat repository. The generated tokens are then stored in
-     * an array called ``, where the key is the chat ID and the value is
-     * 
-     * @return Response a Response object.
-     */
-    public function chatboxs_index(int $id = null, ChatRepository $chatRepository, CsrfTokenManagerInterface $csrfTokenManagerInterface): Response
-    {
-        //ajout des csrfs
-        $csrf = [];
-        foreach ($chatRepository->findBy(['deletedAt' => null]) as $chat) {
-            $csrf[$chat->getId()] = $csrfTokenManagerInterface
-                ->getToken('delete' . $chat->getId())
-                ->getValue();
-        }
-        return $this->render('/base/chatbox_index.html.twig', [
-            'chats' => $chatRepository->findBy(['deletedAt' => null]),
-            'csrf' => json_encode($csrf),
-            'template_cards' => file_get_contents(
-                '/app/templates/base/chat_template_cards.html.twig'
-            ),
-            'template_card' => file_get_contents(
-                '/app/templates/base/chat_template_card.html.twig'
-            ),
-            'template_person' => file_get_contents(
-                '/app/templates/base/chat_template_person.html.twig'
-            ),
-            'template_reponse' => file_get_contents(
-                '/app/templates/base/chat_template_reponse.html.twig'
-            ),
-            'template_question' => file_get_contents(
-                '/app/templates/base/chat_template_question.html.twig'
-            ),
-
-        ]);
-    }
     #[Route('testmail/{from}')]
     public function testmail(MailerInterface $mailer, string $from)
     {
@@ -444,25 +284,6 @@ class ToolsController extends AbstractController
         );
     }
 
-    //archiver un chat
-    #[Route('/admin/chatbox/archive/{id}', name: 'chat_archive', methods: ['POST'])]
-    public function delete(Request $request, Chat $chat, EntityManagerInterface $em): Response
-    {
-        if ($this->isCsrfTokenValid('delete' . $chat->getId(), $request->request->get('_token'))) {
-            if ($request->request->has('delete_delete')) {
-                $em->remove($chat);
-            }
-            if ($request->request->has('delete_restore'))
-                $chat->setDeletedAt(null);
-            if ($request->request->has('delete_softdelete'))
-                $chat->setDeletedAt(new DateTime('now'));
-            $em->flush();
-        }
-        if ($request->request->has('delete_softdelete'))
-            return $this->redirectToRoute('chatboxs_index', [], Response::HTTP_SEE_OTHER);
-        else
-            return $this->redirectToRoute('chatboxs_index', [], Response::HTTP_SEE_OTHER);
-    }
 
     public function generateSitemaps(EntityManagerInterface $em, array $repositories, $request)
     {
@@ -632,5 +453,52 @@ class ToolsController extends AbstractController
 
         // Return the statistics
         return $stats;
+    }
+    public function processFiles($form, $request, &$objet)
+    {
+        $class = explode('\\', \get_class($objet));
+        $entity = \strtolower($class[count($class) - 1]);
+        $form->handleRequest($request);
+        if ($form->isSubmitted() && $form->isValid()) {
+            if ($request->files->get($entity)) {
+                foreach ($request->files->get($entity) as $name => $data) {
+                    $fichier = $form->get($name)->getData();
+                    if ($fichier) {
+                        if (get_class($fichier) == 'Doctrine\Common\Collections\ArrayCollection' || get_class($fichier) == "Doctrine\ORM\PersistentCollection") {
+                            $fichierName = [];
+                            foreach ($fichier as $num => $fiche) {
+                                if ($data[$num][key($data[$num])] != null) {
+                                    $class = explode('\\', get_class($fiche));
+                                    $fichierName = $this->fileUploader->upload($data[$num][key($data[$num])], "$entity/$name/" . key($data[$num]),);
+                                    $functionE = 'set' . ucfirst(key($data[$num]));
+                                    $fiche->$functionE($fichierName);
+                                    $function = 'add' . substr(ucfirst($name), 0, -1);
+                                    $objet->$function($fiche);
+                                }
+                            }
+                        } else {
+                            $fichierName = $this->fileUploader->upload($fichier, "$entity/$name",);
+                            $function = 'set' . $name;
+                            $objet->$function($fichierName);
+                        }
+                    }
+                    // Suppression de la valeur
+                    else {
+                        if ($request->get("$entity_" . $name) == 'à retirer') {
+                            $function = 'set' . $name;
+                            $objet->$function('');
+                        }
+                    }
+                }
+            }
+
+            if (property_exists($objet, 'slug')) {
+                $objet = ToolsHelper::SetSlug($this->em, $objet);
+            }
+
+            return true; // Le formulaire a été traité avec succès
+        }
+
+        return false; // Le formulaire n'a pas été traité avec succès
     }
 }
