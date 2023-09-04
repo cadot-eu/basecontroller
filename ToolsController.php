@@ -37,6 +37,7 @@ use Sentry\EventHint;
 use Dompdf\Adapter\GD;
 use Symfony\Component\Notifier\Message\SmsMessage;
 use App\Entity\User;
+use App\Service\base\ToolsHelper;
 
 class ToolsController extends AbstractController
 {
