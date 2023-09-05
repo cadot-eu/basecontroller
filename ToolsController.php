@@ -43,9 +43,9 @@ class ToolsController extends AbstractController
     //RegistrationController comme base ;-)
     private EmailVerifier $emailVerifier;
 
-    protected $logger, $translator, $em, $mailer, $fileUploader;
+    protected $logger, $translator, $em, $mailer, $fileUploader, $toolsentityController;
 
-    public function __construct(EmailVerifier $emailVerifier, LoggerInterface $logger, TranslatorInterface $translator, EntityManagerInterface $em, MailerInterface $mailer, FileUploader $fileUploader)
+    public function __construct(EmailVerifier $emailVerifier, LoggerInterface $logger, TranslatorInterface $translator, EntityManagerInterface $em, MailerInterface $mailer, FileUploader $fileUploader, ToolsentityController $toolsentityController)
     {
         $this->emailVerifier = $emailVerifier;
         $this->logger = $logger;
@@ -53,6 +53,7 @@ class ToolsController extends AbstractController
         $this->em = $em;
         $this->mailer = $mailer;
         $this->fileUploader = $fileUploader;
+        $this->toolsentityController = $toolsentityController;
     }
 
     /* -------------------------------------------------------------------------- */
@@ -499,5 +500,29 @@ class ToolsController extends AbstractController
         }
 
         return false; // Le formulaire n'a pas été traité avec succès
+    }
+    /**
+     * The function "supprimer" is a route handler in a PHP application that deletes an entity based on
+     * its ID and redirects to a specified route.
+     * 
+     * @param entity The "entity" parameter represents the name of the entity that you want to delete.
+     * It is a string value.
+     * @param id The "id" parameter represents the identifier of the entity that you want to delete. It
+     * is used to specify which entity should be deleted from the database.
+     * @param route The "route" parameter is an optional parameter that specifies the route to redirect
+     * to after the entity is deleted. If a value is provided for this parameter, the user will be
+     * redirected to the specified route after the deletion is completed. If no value is provided, the
+     * user will not be redirected and the
+     * @param Request request The `` parameter is an instance of the `Request` class, which
+     * represents an HTTP request. It contains information about the request such as the request method,
+     * headers, query parameters, and request body. It is used to retrieve data from the request and
+     * pass it to the `supprimer`
+     * 
+     * @return Response a Response object.
+     */
+    #[Route('/admin/supprimer/{entity}/{id}/{route}', name: 'entity_delete', methods: ['POST'])]
+    public function supprimer($entity, $id, $route = null, Request $request): Response
+    {
+        return $this->toolsentityController->supprimer($entity, $id,  $request, $this->em, $route);
     }
 }
