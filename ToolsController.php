@@ -521,8 +521,13 @@ class ToolsController extends AbstractController
      * @return Response a Response object.
      */
     #[Route('/admin/supprimer/{entity}/{id}/{route}', name: 'entity_delete', methods: ['POST'])]
-    public function supprimer($entity, $id, $route = null, Request $request): Response
+    public function supprimer($entity, $id, Request $request, $route = null): Response
     {
         return $this->toolsentityController->supprimer($entity, $id,  $request, $this->em, $route);
+    }
+    #[Route('/admin/tout-supprimer/{entity}/{route}', name: 'entity_all_delete', methods: ['POST'])]
+    public function toutSupprimer($entity, Request $request, $route = null): Response
+    {
+        return $this->toolsentityController->toutSupprimer($entity,  $request, $this->em, $route);
     }
 }
