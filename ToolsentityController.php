@@ -7,6 +7,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use DateTime;
+use App\Service\base\ToolsHelper;
 
 
 class ToolsentityController extends AbstractController
@@ -76,6 +77,60 @@ class ToolsentityController extends AbstractController
         ]);
     }
 
+    public function newedit($entity, Request $request, EntityManagerInterface $em)
+    {
+        // Si $entity est une chaîne de caractères, on est en mode new
+        $nomentity = \is_object($entity) ? $this->getEntityClassName($entity) : $entity;
+        $entityClass = 'App\\Entity\\' . Ucfirst($nomentity);
+        $entityType = 'App\\Form\\' . Ucfirst($nomentity) . 'Type';
+
+        if (\is_object($entity) == false) $entity = new $entityClass(); //pour create
+        $form = $this->createForm($entityType, $entity, []);
+        if ($this->processFiles($form, $request, $entity)) {
+            $em->persist($entity);
+            $em->flush();
+            return $this->redirectToRoute($nomentity . "_index", [], Response::HTTP_SEE_OTHER);
+        }
+
+        return $this->render("/" . $nomentity . "/new.html.twig", [
+            $nomentity => $entity,
+            'form' => $form->createView()
+        ]);
+    }
+
+    public function champ($entity, $type, $valeur, $one, $em)
+    {
+        $nomentity = $this->getEntityClassName($entity);
+        $Repository = $em->getRepository('App\\Entity\\' . \ucfirst($nomentity));
+        if ($one) {
+            foreach ($Repository->findAll() as $objet) {
+                $method = 'set' . $type;
+                $objet->$method(false);
+                $em->persist($objet);
+            }
+        }
+        if ($type) {
+            $method = 'set' . $type;
+            $entity->$method($valeur);
+            $em->persist($entity);
+            $em->flush();
+        }
+        $this->addFlash('success', ucfirst($type) . " $nomentity " . $entity->getId() . " mis à " . $valeur);
+        return $this->redirectToRoute($nomentity . '_index', [], Response::HTTP_SEE_OTHER);
+    }
+
+    public function clone($entityc, $em)
+    {
+        $entity = clone $entityc;
+        if (property_exists($entity, 'slug')) {
+            $entity->setslug($entityc->getslug() . uniqid());
+        }
+        $entity = ToolsHelper::SetSlug($em, $entity);
+        $em->persist($entity);
+        $em->flush();
+        return $this->redirectToRoute($entity . '_index', [], Response::HTTP_SEE_OTHER);
+    }
+
 
     private function getEntityObject($entityclass, $em, $id)
     {
@@ -95,5 +150,52 @@ class ToolsentityController extends AbstractController
             $matches = [];
             return strtolower($entityclass);
         }
+    }
+    public function processFiles($form, $request, &$objet)
+    {
+        $class = explode('\\', \get_class($objet));
+        $entity = \strtolower($class[count($class) - 1]);
+        $form->handleRequest($request);
+        if ($form->isSubmitted() && $form->isValid()) {
+            if ($request->files->get($entity)) {
+                foreach ($request->files->get($entity) as $name => $data) {
+                    $fichier = $form->get($name)->getData();
+                    if ($fichier) {
+                        if (get_class($fichier) == 'Doctrine\Common\Collections\ArrayCollection' || get_class($fichier) == "Doctrine\ORM\PersistentCollection") {
+                            $fichierName = [];
+                            foreach ($fichier as $num => $fiche) {
+                                if ($data[$num][key($data[$num])] != null) {
+                                    $class = explode('\\', get_class($fiche));
+                                    $fichierName = $this->fileUploader->upload($data[$num][key($data[$num])], "$entity/$name/" . key($data[$num]),);
+                                    $functionE = 'set' . ucfirst(key($data[$num]));
+                                    $fiche->$functionE($fichierName);
+                                    $function = 'add' . substr(ucfirst($name), 0, -1);
+                                    $objet->$function($fiche);
+                                }
+                            }
+                        } else {
+                            $fichierName = $this->fileUploader->upload($fichier, "$entity/$name",);
+                            $function = 'set' . $name;
+                            $objet->$function($fichierName);
+                        }
+                    }
+                    // Suppression de la valeur
+                    else {
+                        if ($request->get("$entity_" . $name) == 'à retirer') {
+                            $function = 'set' . $name;
+                            $objet->$function('');
+                        }
+                    }
+                }
+            }
+
+            if (property_exists($objet, 'slug')) {
+                $objet = ToolsHelper::SetSlug($this->em, $objet);
+            }
+
+            return true; // Le formulaire a été traité avec succès
+        }
+
+        return false; // Le formulaire n'a pas été traité avec succès
     }
 }

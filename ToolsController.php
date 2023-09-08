@@ -454,53 +454,7 @@ class ToolsController extends AbstractController
         // Return the statistics
         return $stats;
     }
-    public function processFiles($form, $request, &$objet)
-    {
-        $class = explode('\\', \get_class($objet));
-        $entity = \strtolower($class[count($class) - 1]);
-        $form->handleRequest($request);
-        if ($form->isSubmitted() && $form->isValid()) {
-            if ($request->files->get($entity)) {
-                foreach ($request->files->get($entity) as $name => $data) {
-                    $fichier = $form->get($name)->getData();
-                    if ($fichier) {
-                        if (get_class($fichier) == 'Doctrine\Common\Collections\ArrayCollection' || get_class($fichier) == "Doctrine\ORM\PersistentCollection") {
-                            $fichierName = [];
-                            foreach ($fichier as $num => $fiche) {
-                                if ($data[$num][key($data[$num])] != null) {
-                                    $class = explode('\\', get_class($fiche));
-                                    $fichierName = $this->fileUploader->upload($data[$num][key($data[$num])], "$entity/$name/" . key($data[$num]),);
-                                    $functionE = 'set' . ucfirst(key($data[$num]));
-                                    $fiche->$functionE($fichierName);
-                                    $function = 'add' . substr(ucfirst($name), 0, -1);
-                                    $objet->$function($fiche);
-                                }
-                            }
-                        } else {
-                            $fichierName = $this->fileUploader->upload($fichier, "$entity/$name",);
-                            $function = 'set' . $name;
-                            $objet->$function($fichierName);
-                        }
-                    }
-                    // Suppression de la valeur
-                    else {
-                        if ($request->get("$entity_" . $name) == 'à retirer') {
-                            $function = 'set' . $name;
-                            $objet->$function('');
-                        }
-                    }
-                }
-            }
 
-            if (property_exists($objet, 'slug')) {
-                $objet = ToolsHelper::SetSlug($this->em, $objet);
-            }
-
-            return true; // Le formulaire a été traité avec succès
-        }
-
-        return false; // Le formulaire n'a pas été traité avec succès
-    }
     /**
      * The function "supprimer" is a route handler in a PHP application that deletes an entity based on
      * its ID and redirects to a specified route.
