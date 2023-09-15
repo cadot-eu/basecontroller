@@ -162,6 +162,7 @@ class ToolsentityController extends AbstractController
     {
         $class = explode('\\', \get_class($objet));
         $entity = \strtolower($class[count($class) - 1]);
+        //on suprime l'id de l'objet
         $form->handleRequest($request);
         if ($form->isSubmitted() && $form->isValid()) {
             if ($request->files->get($entity)) {

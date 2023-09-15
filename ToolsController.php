@@ -183,7 +183,7 @@ class ToolsController extends AbstractController
      * @return Response A Response object
      */
     #[route('/admin/changeordre/{entity}/{id}/{action}', name: 'change_ordre', methods: ['GET'])]
-    public function changeOrdre(EntityManagerInterface $em, string $entity, int $id, string $action): Response
+    public function changeOrdre(Request $request, EntityManagerInterface $em, string $entity, int $id, string $action): Response
     {
         $faqs = $em->getRepository('App\\Entity\\' . ucwords($entity))->findBy(['deletedAt' => null], ['ordre' => 'ASC']);
         foreach ($faqs as $num => $faq) {
@@ -213,6 +213,8 @@ class ToolsController extends AbstractController
             $em->persist($faq);
         }
         $em->flush();
+        return $this->redirect($request->headers->get('referer'), Response::HTTP_SEE_OTHER);
+
         return $this->redirectToRoute(
             strtolower($entity) . '_index',
             ['sort' => 'a.ordre', 'direction' => 'asc'],
