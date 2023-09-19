@@ -84,7 +84,7 @@ class ToolsentityController extends AbstractController
         ]);
     }
 
-    public function newedit($entity, Request $request)
+    public function newedit($entity, Request $request, $route = null)
     {
         // Si $entity est une chaîne de caractères, on est en mode new
         $nomentity = \is_object($entity) ? $this->getEntityClassName($entity) : $entity;
@@ -96,7 +96,11 @@ class ToolsentityController extends AbstractController
         if ($this->processFiles($form, $request, $entity)) {
             $this->em->persist($entity);
             $this->em->flush();
-            return $this->redirectToRoute($nomentity . "_index", [], Response::HTTP_SEE_OTHER);
+            $this->addFlash('success', "$nomentity " . $entity->getId() . " ajouté");
+            if ($route)
+                return $this->redirectToRoute($route, []);
+            else
+                return $this->redirectToRoute($nomentity . "_index", [], Response::HTTP_SEE_OTHER);
         }
 
         return $this->render("/" . $nomentity . "/new.html.twig", [

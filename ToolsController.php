@@ -172,47 +172,57 @@ class ToolsController extends AbstractController
     /* -------------------------------------------------------------------------- */
     /*           Sert pour les indexs pour changer l'ordre des éléments           */
     /* -------------------------------------------------------------------------- */
-    /**
-     * It moves an element in an array to a new position
-     *
-     * @param EntityManagerInterface em the entity manager
-     * @param String entity the entity name
-     * @param int id the id of the entity to move
-     * @param String action the action to perform, up, down, top, bottom
-     *
-     * @return Response A Response object
-     */
+
     #[route('/admin/changeordre/{entity}/{id}/{action}', name: 'change_ordre', methods: ['GET'])]
-    public function changeOrdre(Request $request, EntityManagerInterface $em, string $entity, int $id, string $action): Response
+    public function changeOrdre(Request $request, EntityManagerInterface $em, string $entity,  $id, $action): Response
     {
         $faqs = $em->getRepository('App\\Entity\\' . ucwords($entity))->findBy(['deletedAt' => null], ['ordre' => 'ASC']);
         foreach ($faqs as $num => $faq) {
-            if ($faq->getId() == $id) {
-                $pos = $num;
+            //si id est un nombre
+            if (\is_numeric($id)) {
+                if ($faq->getId() == $id) {
+                    $pos = $num;
+                }
+            }
+            //sinon on cherche par le nom
+            else {
+                if ($faq->getNom() == $id) {
+                    $pos = $num;
+                }
             }
         }
-        switch ($action) {
-            case 'up':
-                $dest = $pos - 1;
-                break;
-            case 'down':
-                $dest = $pos + 1;
-                break;
-            case 'top':
-                $dest = 0;
-                break;
-            case 'bottom':
-                $dest = count($faqs) - 1;
-                break;
-            default:
-                throw new Exception('Mouvement inconnu, up, top, down, bottom');
-                break;
+        if (\is_numeric($action)) {
+            $dest = $action;
+        } else {
+            switch ($action) {
+                case 'up':
+                    $dest = $pos - 1;
+                    break;
+                case 'down':
+                    $dest = $pos + 1;
+                    break;
+                case 'top':
+                    $dest = 0;
+                    break;
+                case 'bottom':
+                    $dest = count($faqs) - 1;
+                    break;
+                default:
+                    throw new Exception('Mouvement inconnu, up, top, down, bottom');
+                    break;
+            }
         }
         foreach (ArrayHelper::moveElement($faqs, $pos, $dest) as $num => $faq) {
             $faq->setOrdre($num);
             $em->persist($faq);
         }
         $em->flush();
+
+        //si on est dans une demande ajax 
+        if ($request->isXmlHttpRequest())
+            return new JsonResponse(['success' => true]);
+        // pour une erreru return new JsonResponse(['error' => 'Une erreur s\'est produite.'], 400);
+
         return $this->redirect($request->headers->get('referer'), Response::HTTP_SEE_OTHER);
 
         return $this->redirectToRoute(
@@ -221,6 +231,7 @@ class ToolsController extends AbstractController
             Response::HTTP_SEE_OTHER
         );
     }
+
 
     #[Route('testmail/{from}')]
     public function testmail(MailerInterface $mailer, string $from)
