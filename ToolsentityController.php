@@ -96,7 +96,7 @@ class ToolsentityController extends AbstractController
         if ($this->processFiles($form, $request, $entity)) {
             $this->em->persist($entity);
             $this->em->flush();
-            $this->addFlash('success', "$nomentity " . $entity->getId() . " ajouté");
+            $this->addFlash('success', "$nomentity " . $entity->getId() . " " . (!\is_object($entity) ? "créé" : "modifié"));
             if ($route)
                 return $this->redirectToRoute($route, []);
             else
