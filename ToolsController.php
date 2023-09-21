@@ -220,7 +220,7 @@ class ToolsController extends AbstractController
 
         //si on est dans une demande ajax 
         if ($request->isXmlHttpRequest())
-            return new JsonResponse(['success' => true]);
+            return new Response('ok');
         // pour une erreru return new JsonResponse(['error' => 'Une erreur s\'est produite.'], 400);
 
         return $this->redirect($request->headers->get('referer'), Response::HTTP_SEE_OTHER);
