@@ -193,7 +193,7 @@ class ToolsentityController extends AbstractController
                     }
                     // Suppression de la valeur
                     else {
-                        if ($request->get("$entity_" . $name) == 'à retirer') {
+                        if ($request->get($entity . "_" . $name) == 'à retirer') {
                             $function = 'set' . $name;
                             $objet->$function('');
                         }
