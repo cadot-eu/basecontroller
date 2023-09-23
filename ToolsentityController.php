@@ -126,7 +126,7 @@ class ToolsentityController extends AbstractController
             $this->em->persist($entity);
             $this->em->flush();
         }
-        $this->addFlash('success', ucfirst($type) . " $nomentity " . $entity->getId() . " mis à " . $valeur);
+        $this->addFlash('success', ucfirst($type) . " $nomentity " . $entity->getId() . " mis à \"" . $valeur . "\"");
         return $this->redirectToRoute($nomentity . '_index', [], Response::HTTP_SEE_OTHER);
     }
 
