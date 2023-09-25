@@ -23,7 +23,7 @@ class ToolsentityController extends AbstractController
     {
         $nomentity = $this->getEntityClassName($entityclass);
         foreach ($this->em->getRepository('App\\Entity\\' . \ucfirst($nomentity))->findAll() as $item) {
-            if ($this->isCsrfTokenValid('delete_Devi', $request->request->get('_alltoken')) and $item->getDeletedAt() != null) {
+            if ($item->getDeletedAt() != null) {
                 $this->em->remove($item);
             }
         }
