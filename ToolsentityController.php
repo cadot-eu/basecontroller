@@ -9,6 +9,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use DateTime;
 use App\Service\base\ToolsHelper;
+use Symfony\Component\String\Slugger\AsciiSlugger;
 
 
 class ToolsentityController extends AbstractController
@@ -93,6 +94,7 @@ class ToolsentityController extends AbstractController
 
         if (\is_object($entity) == false) $entity = new $entityClass(); //pour create
         $form = $this->createForm($entityType, $entity, []);
+
         if ($this->processFiles($form, $request, $entity)) {
             $this->em->persist($entity);
             $this->em->flush();
@@ -201,9 +203,8 @@ class ToolsentityController extends AbstractController
                 }
             }
 
-            if (property_exists($objet, 'slug')) {
-                $objet = ToolsHelper::SetSlug($this->em, $objet);
-            }
+
+
 
             return true; // Le formulaire a été traité avec succès
         }
