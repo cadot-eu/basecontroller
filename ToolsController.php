@@ -232,7 +232,9 @@ class ToolsController extends AbstractController
         );
     }
 
-
+    /* -------------------------------------------------------------------------- */
+    /*                     Permet de tester l'envoie de mail'                     */
+    /* -------------------------------------------------------------------------- */
     #[Route('testmail/{from}')]
     public function testmail(MailerInterface $mailer, string $from)
     {
@@ -255,6 +257,9 @@ class ToolsController extends AbstractController
         }
         return new JsonResponse('ok');
     }
+    /* -------------------------------------------------------------------------- */
+    /*                 récupère la liste des filtres liip imagine                 */
+    /* -------------------------------------------------------------------------- */
     #[Route('/admin/getLiipFilters', name: 'getLiipFilters', methods: ['GET'])]
     public function getLiipFilters(FilterService $filterService): Response
     {
@@ -265,6 +270,24 @@ class ToolsController extends AbstractController
         }
         return new JsonResponse($filters);
     }
+
+
+    /* -------------------------------------------------------------------------- */
+    /*                 The function creates a PNG image from liip.                */
+    /* -------------------------------------------------------------------------- */
+    /**
+     * 
+     * @param FilterService filterService The `` parameter is an instance of the
+     * `FilterService` class. It is used to generate the URL of the filtered image.
+     * @param string liipfilter The `liipfilter` parameter is a string that represents the name of a
+     * LiipImagine filter. LiipImagine is a library that provides on-the-fly image manipulation in Symfony
+     * applications. Filters in LiipImagine define different image transformations, such as resizing,
+     * cropping, and applying effects. In this
+     * 
+     * @return Response a Response object. The content of the response is the filtered image file specified
+     * by the URL returned by the `->getUrlOfFilteredImage()` method. The HTTP status code of
+     * the response is 200 (OK), and the content-type header is set to 'image/png'.
+     */
     #[Route('/tools/getPngForTemplate/{liipfilter}', name: 'getLiipFilters', methods: ['GET'])]
     public function createPngForTemplate(
         FilterService $filterService,
@@ -295,7 +318,9 @@ class ToolsController extends AbstractController
         );
     }
 
-
+    /* -------------------------------------------------------------------------- */
+    /*                            création du sitemaps                            */
+    /* -------------------------------------------------------------------------- */
     public function generateSitemaps(EntityManagerInterface $em, array $repositories, $request)
     {
         $baseurl = $request->getSchemeAndHttpHost() . '/';
@@ -327,7 +352,10 @@ class ToolsController extends AbstractController
 
 
 
-    //function pour tester la vaidité d'un siret par le site de l'insee, on prend le bearer dans $_ENV['INSEE_TOKEN']
+    /* -------------------------------------------------------------------------- */
+    /*      function pour tester la vaidité d'un siret par le site de l'insee     */
+    /* -------------------------------------------------------------------------- */
+    // on prend le bearer dans $_ENV['INSEE_TOKEN']
     #[Route('/admin/siret/{siret}', name: 'veriffunction_siret', methods: ['GET'])]
     public function siret($siret): Response
     {
@@ -373,19 +401,22 @@ class ToolsController extends AbstractController
 
         return new Response($output);
     }
-    //function pour envoyer un mail
+    /* -------------------------------------------------------------------------- */
+    /*                         function pour envoyer un mail                      */
+    /* -------------------------------------------------------------------------- */
     public function sendmail($to, $subject, $body, $message = true)
     {
         if ($to = 'admin')
             $to = $_ENV['MAILER_SENDER'];
         $email = (new Email())
+            ->from($_ENV['MAILER_SENDER'])
             ->to($to)
             ->subject($subject)
             ->text($body);
         try {
             $this->mailer->send($email);
-            if ($message)
-                $this->addFlash('success', 'Votre message a bien été envoyé');
+            if ($message != false)
+                $this->addFlash('success', $message != true ? $message : 'Votre message a bien été envoyé');
         } catch (TransportExceptionInterface $e) {
             $this->addFlash('error', 'Une erreur est survenue lors de l\'envoi du message, l\'administrateur a été prévenu et votre message sera traité dans les plus brefs délais');
             captureMessage('Envoie mail: ' . $e, new Severity('error'), new EventHint(['tags' => ['resolver' => 'mick']]));
