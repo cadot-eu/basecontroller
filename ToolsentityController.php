@@ -173,7 +173,6 @@ class ToolsentityController extends AbstractController
             if ($request->files->get($entity)) {
                 foreach ($request->files->get($entity) as $name => $data) {
                     $fichier = $form->get($name)->getData();
-
                     if ($fichier) {
                         if (get_class($fichier) == 'Doctrine\Common\Collections\ArrayCollection' || get_class($fichier) == "Doctrine\ORM\PersistentCollection") {
                             $fichierName = [];
@@ -202,10 +201,6 @@ class ToolsentityController extends AbstractController
                     }
                 }
             }
-
-
-
-
             return true; // Le formulaire a été traité avec succès
         }
 
