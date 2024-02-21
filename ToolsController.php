@@ -173,20 +173,23 @@ class ToolsController extends AbstractController
     /*           Sert pour les indexs pour changer l'ordre des éléments           */
     /* -------------------------------------------------------------------------- */
 
+    #[route('/admin/changeordre/{entity}/{id}/{action}/{collection}/{entityid}', name: 'change_ordre_collection', methods: ['GET'])]
     #[route('/admin/changeordre/{entity}/{id}/{action}', name: 'change_ordre', methods: ['GET'])]
-    public function changeOrdre(Request $request, EntityManagerInterface $em, string $entity,  $id, $action): Response
+    public function changeOrdre(Request $request, EntityManagerInterface $em, string $entity,  $id, $action, $collection = null, $entityid = null): Response
     {
-        $faqs = $em->getRepository('App\\Entity\\' . ucwords($entity))->findBy(['deletedAt' => null], ['ordre' => 'ASC']);
-        foreach ($faqs as $num => $faq) {
+        if (!$entity)
+            return new JsonResponse(['error' => 'Une erreur s\'est produite.'], 400);
+        $objects = $em->getRepository('App\\Entity\\' . ucwords($entity))->findBy(['deletedAt' => null], ['ordre' => 'ASC']);
+        foreach ($objects as $num => $object) {
             //si id est un nombre
             if (\is_numeric($id)) {
-                if ($faq->getId() == $id) {
+                if ($object->getId() == $id) {
                     $pos = $num;
                 }
             }
             //sinon on cherche par le nom
             else {
-                if ($faq->getNom() == $id) {
+                if ($object->getNom() == $id) {
                     $pos = $num;
                 }
             }
@@ -205,16 +208,27 @@ class ToolsController extends AbstractController
                     $dest = 0;
                     break;
                 case 'bottom':
-                    $dest = count($faqs) - 1;
+                    $dest = count($objects) - 1;
                     break;
                 default:
                     throw new Exception('Mouvement inconnu, up, top, down, bottom');
                     break;
             }
         }
-        foreach (ArrayHelper::moveElement($faqs, $pos, $dest) as $num => $faq) {
-            $faq->setOrdre($num);
-            $em->persist($faq);
+        //on regarde si on est dans une collection
+        if ($collection == null)
+            foreach (ArrayHelper::moveElement($objects, $pos, $dest) as $num => $object) {
+                $object->setOrdre($num);
+                $em->persist($object);
+            }
+        else {
+            $gets = 'get' . ucwords($collection);
+            $collects = $em->getRepository('App\\Entity\\' . ucwords($entity))->find($entityid)->$gets()->ToArray();
+            foreach (ArrayHelper::moveElementInObjet($collects, $id, $dest) as $col) {
+                $c = $em->getRepository('App\\Entity\\' . ucwords(substr($collection, 0, -1)))->find($col->getId()); //on supprime le s (pluriel pour collection pas ex: intrigues collection de intrigue dans livre)
+                $c->setOrdre($col->getOrdre());
+                $em->persist($c);
+            }
         }
         $em->flush();
 
@@ -222,14 +236,14 @@ class ToolsController extends AbstractController
         if ($request->isXmlHttpRequest())
             return new Response('ok');
         // pour une erreru return new JsonResponse(['error' => 'Une erreur s\'est produite.'], 400);
+        if ($request->headers->get('referer'))
+            return $this->redirect($request->headers->get('referer'), Response::HTTP_SEE_OTHER);
 
-        return $this->redirect($request->headers->get('referer'), Response::HTTP_SEE_OTHER);
-
-        return $this->redirectToRoute(
-            strtolower($entity) . '_index',
-            ['sort' => 'a.ordre', 'direction' => 'asc'],
-            Response::HTTP_SEE_OTHER
-        );
+        // return $this->redirectToRoute(
+        //     strtolower($entity) . '_index',
+        //     ['sort' => 'a.ordre', 'direction' => 'asc'],
+        //     Response::HTTP_SEE_OTHER
+        // );
     }
 
     /* -------------------------------------------------------------------------- */
@@ -409,7 +423,7 @@ class ToolsController extends AbstractController
         if ($to = 'admin')
             $to = $_ENV['MAILER_SENDER'];
         $email = (new Email())
-            ->from($_ENV['MAILER_SENDER'])  
+            ->from($_ENV['MAILER_SENDER'])
             ->to($to)
             ->subject($subject)
             ->text($body);
