@@ -104,6 +104,11 @@ class ToolsentityController extends AbstractController
             else
                 return $this->redirectToRoute($nomentity . "_index", [], Response::HTTP_SEE_OTHER);
         }
+        //sinon on retourne d'ou vient l'utilisateur
+        else {
+            if ($route)
+                return $this->redirectToRoute($route, []);
+        }
 
         return $this->render("/" . $nomentity . "/new.html.twig", [
             $nomentity => $entity,
@@ -202,6 +207,9 @@ class ToolsentityController extends AbstractController
                 }
             }
             return true; // Le formulaire a été traité avec succès
+        }
+        if ($form->isSubmitted() && !$form->isValid()) {
+            $this->addFlash('error', $form->getErrors(true)[0]->getMessage());
         }
 
         return false; // Le formulaire n'a pas été traité avec succès
