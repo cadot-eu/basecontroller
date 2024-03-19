@@ -175,6 +175,13 @@ class ToolsentityController extends AbstractController
         $entity = \strtolower($class[count($class) - 1]);
         $form->handleRequest($request);
         if ($form->isSubmitted() && $form->isValid()) {
+            //on ajoute la date pour updatedat s'il est null ou sil n'existe pas dans le request
+            if ($objet->getUpdatedAt() == null || !isset($request->request->all()[$entity]['updatedAt'])) {
+                $objet->setUpdatedAt(new \DateTime());
+            }
+            if ($objet->getCreatedAt() == null) {
+                $objet->setcreatedAt(new \DateTime());
+            }
             if ($request->files->get($entity)) {
                 foreach ($request->files->get($entity) as $name => $data) {
                     $fichier = $form->get($name)->getData();
