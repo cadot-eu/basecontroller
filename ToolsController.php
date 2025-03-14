@@ -174,20 +174,19 @@ class ToolsController extends AbstractController
     /* -------------------------------------------------------------------------- */
 
     #[route('/admin/changeordre/{entity}/{id}/{action}', name: 'change_ordre', methods: ['GET'])]
-    #[route('/admin/changeordre/{entity}/{id}/{action}/{champ}', name: 'change_ordre_champ', methods: ['GET'])]
-    public function changeOrdre(Request $request, EntityManagerInterface $em, string $entity,  $id, $action, $champ = null): Response
+    public function changeOrdre(Request $request, EntityManagerInterface $em, string $entity,  $id, $action): Response
     {
-        $entities = $em->getRepository('App\\Entity\\' . ucwords($entity))->findBy(['deletedAt' => null], ['ordre' => 'ASC']);
-        foreach ($entities as $num => $entity) {
+        $faqs = $em->getRepository('App\\Entity\\' . ucwords($entity))->findBy(['deletedAt' => null], ['ordre' => 'ASC']);
+        foreach ($faqs as $num => $faq) {
             //si id est un nombre
             if (\is_numeric($id)) {
-                if ($entity->getId() == $id) {
+                if ($faq->getId() == $id) {
                     $pos = $num;
                 }
             }
             //sinon on cherche par le nom
             else {
-                if ($entity->getNom() == $id) {
+                if ($faq->getNom() == $id) {
                     $pos = $num;
                 }
             }
@@ -206,20 +205,20 @@ class ToolsController extends AbstractController
                     $dest = 0;
                     break;
                 case 'bottom':
-                    $dest = count($entities) - 1;
+                    $dest = count($faqs) - 1;
                     break;
                 default:
                     throw new Exception('Mouvement inconnu, up, top, down, bottom');
                     break;
             }
         }
-        foreach (ArrayHelper::moveElement($entities, $pos, $dest, $champ) as $num => $entity) {
-            $entity->setOrdre($num);
-            $em->persist($entity);
+        foreach (ArrayHelper::moveElement($faqs, $pos, $dest) as $num => $faq) {
+            $faq->setOrdre($num);
+            $em->persist($faq);
         }
         $em->flush();
 
-        //si on est dans une demande ajax 
+        //si on est dans une demande ajax
         if ($request->isXmlHttpRequest())
             return new Response('ok');
         // pour une erreru return new JsonResponse(['error' => 'Une erreur s\'est produite.'], 400);
@@ -265,8 +264,10 @@ class ToolsController extends AbstractController
     public function getLiipFilters(FilterService $filterService): Response
     {
         $filters = [];
-        foreach (array_keys($this->getParameter('liip_imagine.filter_sets'))
-            as $filter) {
+        foreach (
+            array_keys($this->getParameter('liip_imagine.filter_sets'))
+            as $filter
+        ) {
             $filters[] = $filter;
         }
         return new JsonResponse($filters);
@@ -277,14 +278,14 @@ class ToolsController extends AbstractController
     /*                 The function creates a PNG image from liip.                */
     /* -------------------------------------------------------------------------- */
     /**
-     * 
+     *
      * @param FilterService filterService The `` parameter is an instance of the
      * `FilterService` class. It is used to generate the URL of the filtered image.
      * @param string liipfilter The `liipfilter` parameter is a string that represents the name of a
      * LiipImagine filter. LiipImagine is a library that provides on-the-fly image manipulation in Symfony
      * applications. Filters in LiipImagine define different image transformations, such as resizing,
      * cropping, and applying effects. In this
-     * 
+     *
      * @return Response a Response object. The content of the response is the filtered image file specified
      * by the URL returned by the `->getUrlOfFilteredImage()` method. The HTTP status code of
      * the response is 200 (OK), and the content-type header is set to 'image/png'.
@@ -465,7 +466,7 @@ class ToolsController extends AbstractController
      * Retrieves the statistics for each entity in the given list.
      *
      * @param array $liste The list of entities and their corresponding queries. exemple: ['bien' => ['etat' => ['en ligne', 'brouillon']], 'user' => ['situation' => ['actif', 'inactif']]];
-   
+
      * @return array The statistics for each entity.
      */
     public function Etats_Repository(array $liste, EntityManagerInterface $em): array
@@ -501,7 +502,7 @@ class ToolsController extends AbstractController
     /**
      * The function "supprimer" is a route handler in a PHP application that deletes an entity based on
      * its ID and redirects to a specified route.
-     * 
+     *
      * @param entity The "entity" parameter represents the name of the entity that you want to delete.
      * It is a string value.
      * @param id The "id" parameter represents the identifier of the entity that you want to delete. It
@@ -514,7 +515,7 @@ class ToolsController extends AbstractController
      * represents an HTTP request. It contains information about the request such as the request method,
      * headers, query parameters, and request body. It is used to retrieve data from the request and
      * pass it to the `supprimer`
-     * 
+     *
      * @return Response a Response object.
      */
     #[Route('/admin/supprimer/{entity}/{id}/{route}', name: 'entity_delete', methods: ['POST'])]
